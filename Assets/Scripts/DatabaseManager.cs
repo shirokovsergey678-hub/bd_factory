@@ -8,10 +8,10 @@ public class DatabaseManager : MonoBehaviour
 {
     // ÑÒĞÎÊÀ ÏÎÄÊËŞ×ÅÍÈß - ÈÑÏĞÀÂÜ ÏÎÄ ÑÂÎŞ ÁÀÇÓ!
     // Âàğèàíò 1: Windows àóòåíòèôèêàöèÿ (åñëè èñïîëüçóåøü Windows)
-    private string connectionString = "Server=localhost;Database=CatalogDB;Integrated Security=True;";
+    private string connectionString = "Server=DESKTOP-CNBOKTJ\\SQLEXPRESS;Database=factory;Integrated Security=True;";
 
     // Âàğèàíò 2: Åñëè ñ ëîãèíîì/ïàğîëåì (ğàñêîììåíòèğóé è èñïğàâü)
-    // private string connectionString = "Server=localhost;Database=CatalogDB;User Id=sa;Password=your_password;";
+    // private string connectionString = "Server=localhost;Database=factory;User Id=sa;Password=your_password;";
 
     private static DatabaseManager instance;
     public static DatabaseManager Instance => instance;
