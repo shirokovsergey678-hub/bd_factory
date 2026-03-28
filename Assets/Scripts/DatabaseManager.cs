@@ -1,17 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using System.Data.SqlClient;
+using System.Data.Odbc;
+using System;
 using System.Threading.Tasks;
 
 public class DatabaseManager : MonoBehaviour
 {
-    // СТРОКА ПОДКЛЮЧЕНИЯ - ИСПРАВЬ ПОД СВОЮ БАЗУ!
-    // Вариант 1: Windows аутентификация (если используешь Windows)
-    private string connectionString = "Server=DESKTOP-CNBOKTJ\\SQLEXPRESS;Database=factory;Integrated Security=True;";
-
-    // Вариант 2: Если с логином/паролем (раскомментируй и исправь)
-    // private string connectionString = "Server=localhost;Database=factory;User Id=sa;Password=your_password;";
+    // ODBC строка подключения
+    private string connectionString = "Driver={SQL Server};Server=DESKTOP-CNBOKTJ\\SQLEXPRESS;Database=factory;Trusted_Connection=yes;";
 
     private static DatabaseManager instance;
     public static DatabaseManager Instance => instance;
@@ -31,81 +26,96 @@ public class DatabaseManager : MonoBehaviour
         }
     }
 
-    // МЕТОД РЕГИСТРАЦИИ
+    // Регистрация (с async, тут все ок)
     public async Task<(bool success, string message)> Register(string username, string email, string password)
     {
         try
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (OdbcConnection conn = new OdbcConnection(connectionString))
             {
                 await conn.OpenAsync();
 
                 // Проверяем, нет ли такого пользователя
-                string checkQuery = "SELECT COUNT(*) FROM Users WHERE Username = @username OR Email = @email";
-                using (SqlCommand checkCmd = new SqlCommand(checkQuery, conn))
+                string checkQuery = "SELECT COUNT(*) FROM Users WHERE Username = ? OR Email = ?";
+                using (OdbcCommand checkCmd = new OdbcCommand(checkQuery, conn))
                 {
-                    checkCmd.Parameters.AddWithValue("@username", username);
-                    checkCmd.Parameters.AddWithValue("@email", email);
+                    checkCmd.Parameters.AddWithValue("@p1", username);
+                    checkCmd.Parameters.AddWithValue("@p2", email);
 
-                    int count = (int)await checkCmd.ExecuteScalarAsync();
+                    int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
                     if (count > 0)
                     {
                         return (false, "Пользователь с таким именем или email уже существует");
                     }
                 }
 
-                // Создаем нового пользователя
-                string insertQuery = @"
+                // Экранируем кавычки в пароле
+                string escapedPassword = password.Replace("'", "''");
+
+                // Формируем запрос с экранированным паролем
+                string insertQuery = $@"
                     INSERT INTO Users (Username, Email, PasswordHash, Role) 
-                    VALUES (@username, @email, HASHBYTES('SHA2_256', @password), 'User')";
+                    VALUES (?, ?, HASHBYTES('SHA2_256', '{escapedPassword}'), 'User')";
 
-                using (SqlCommand insertCmd = new SqlCommand(insertQuery, conn))
+                Debug.Log($"Регистрация: {username}");
+
+                using (OdbcCommand insertCmd = new OdbcCommand(insertQuery, conn))
                 {
-                    insertCmd.Parameters.AddWithValue("@username", username);
-                    insertCmd.Parameters.AddWithValue("@email", email);
-                    insertCmd.Parameters.AddWithValue("@password", password);
+                    insertCmd.Parameters.AddWithValue("@p1", username);
+                    insertCmd.Parameters.AddWithValue("@p2", email);
 
-                    await insertCmd.ExecuteNonQueryAsync();
-                    return (true, "Регистрация успешна! Теперь можно войти.");
+                    int rows = await insertCmd.ExecuteNonQueryAsync();
+                    Debug.Log($"Добавлено строк: {rows}");
+
+                    if (rows > 0)
+                    {
+                        return (true, "Регистрация успешна! Теперь можно войти.");
+                    }
+                    else
+                    {
+                        return (false, "Ошибка при создании пользователя");
+                    }
                 }
             }
         }
-        catch (SqlException ex)
+        catch (OdbcException ex)
         {
-            Debug.LogError($"Ошибка базы данных: {ex.Message}");
-            return (false, $"Ошибка подключения: {ex.Message}");
+            Debug.LogError($"Ошибка ODBC: {ex.Message}");
+            return (false, $"Ошибка базы данных: {ex.Message}");
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             Debug.LogError($"Ошибка: {ex.Message}");
             return (false, $"Ошибка: {ex.Message}");
         }
     }
 
-    // МЕТОД ВХОДА
-    public async Task<(bool success, User user, string message)> Login(string username, string password)
+    // Вход (синхронная версия, без async)
+    public (bool success, User user, string message) Login(string username, string password)
     {
         try
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (OdbcConnection conn = new OdbcConnection(connectionString))
             {
-                await conn.OpenAsync();
+                conn.Open();
                 Debug.Log("Подключение к БД установлено");
 
-                string query = @"
+                // Экранируем кавычки в пароле
+                string escapedPassword = password.Replace("'", "''");
+
+                string query = $@"
                     SELECT Id, Username, Email, Role 
                     FROM Users 
-                    WHERE Username = @username 
-                    AND PasswordHash = HASHBYTES('SHA2_256', @password)";
+                    WHERE Username = ? 
+                    AND PasswordHash = HASHBYTES('SHA2_256', '{escapedPassword}')";
 
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+                using (OdbcCommand cmd = new OdbcCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@username", username);
-                    cmd.Parameters.AddWithValue("@password", password);
 
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    using (OdbcDataReader reader = cmd.ExecuteReader())
                     {
-                        if (await reader.ReadAsync())
+                        if (reader.Read())
                         {
                             CurrentUser = new User
                             {
@@ -115,37 +125,26 @@ public class DatabaseManager : MonoBehaviour
                                 Role = reader.GetString(3)
                             };
 
-                            Debug.Log($"Успешный вход: {CurrentUser.Username} (Роль: {CurrentUser.Role})");
-                            return (true, CurrentUser, $"Добро пожаловать, {CurrentUser.Username}!");
-                        }
-                        else
-                        {
-                            Debug.Log("Неверный логин или пароль");
-                            return (false, null, "Неверный логин или пароль");
+                            Debug.Log($"Успешный вход: {CurrentUser.Username}");
+                            return (true, CurrentUser, "Добро пожаловать!");
                         }
                     }
                 }
             }
+            return (false, null, "Неверный логин или пароль");
         }
-        catch (SqlException ex)
-        {
-            Debug.LogError($"Ошибка SQL: {ex.Message}");
-            return (false, null, $"Ошибка подключения к базе: {ex.Message}");
-        }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             Debug.LogError($"Ошибка: {ex.Message}");
-            return (false, null, $"Ошибка: {ex.Message}");
+            return (false, null, ex.Message);
         }
     }
 
-    // ВЫХОД
     public void Logout()
     {
         CurrentUser = null;
         Debug.Log("Выход выполнен");
     }
 
-    // ПРОВЕРКА ПРАВ (для админа)
     public bool IsAdmin => CurrentUser != null && CurrentUser.Role == "Admin";
 }

@@ -26,7 +26,7 @@ public class AuthUI : MonoBehaviour
     public Button backToLoginButton;
     public TextMeshProUGUI regMessage;
 
-    [Header("Главное меню (после входа)")]
+    [Header("Главное меню")]
     public TextMeshProUGUI welcomeText;
     public Button logoutButton;
 
@@ -38,22 +38,21 @@ public class AuthUI : MonoBehaviour
 
         if (db == null)
         {
-            Debug.LogError("DatabaseManager не найден! Добавь его на сцену");
+            Debug.LogError("DatabaseManager не найден!");
             return;
         }
 
-        // Назначаем обработчики кнопок
         loginButton.onClick.AddListener(OnLogin);
         goToRegisterButton.onClick.AddListener(() => ShowPanel(registerPanel));
         registerButton.onClick.AddListener(OnRegister);
         backToLoginButton.onClick.AddListener(() => ShowPanel(loginPanel));
         logoutButton.onClick.AddListener(OnLogout);
 
-        // Показываем панель логина
         ShowPanel(loginPanel);
     }
 
-    async void OnLogin()
+    // Убрали async, теперь синхронно
+    void OnLogin()
     {
         string username = loginUsername.text;
         string password = loginPassword.text;
@@ -69,7 +68,8 @@ public class AuthUI : MonoBehaviour
         loginMessage.text = "Вход...";
         loginMessage.color = Color.yellow;
 
-        var result = await db.Login(username, password);
+        // Синхронный вызов
+        var result = db.Login(username, password);
 
         loginButton.interactable = true;
 
@@ -94,7 +94,6 @@ public class AuthUI : MonoBehaviour
         string password = regPassword.text;
         string confirm = regConfirmPassword.text;
 
-        // Проверки
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
             regMessage.text = "Заполните все поля!";
@@ -111,7 +110,7 @@ public class AuthUI : MonoBehaviour
 
         if (password.Length < 4)
         {
-            regMessage.text = "Пароль должен быть минимум 4 символа!";
+            regMessage.text = "Пароль минимум 4 символа!";
             regMessage.color = Color.red;
             return;
         }
@@ -136,13 +135,11 @@ public class AuthUI : MonoBehaviour
             regMessage.text = result.message;
             regMessage.color = Color.green;
 
-            // Очищаем поля
             regUsername.text = "";
             regEmail.text = "";
             regPassword.text = "";
             regConfirmPassword.text = "";
 
-            // Через 2 секунды возвращаемся к логину
             await Task.Delay(2000);
             ShowPanel(loginPanel);
         }
