@@ -68,7 +68,6 @@ public class AuthUI : MonoBehaviour
         loginMessage.text = "Вход...";
         loginMessage.color = Color.yellow;
 
-        // Синхронный вызов
         var result = db.Login(username, password);
 
         loginButton.interactable = true;
@@ -78,12 +77,27 @@ public class AuthUI : MonoBehaviour
             loginMessage.text = result.message;
             loginMessage.color = Color.green;
             welcomeText.text = $"Привет, {result.user.Username}! Роль: {result.user.Role}";
-            ShowPanel(mainPanel);
+
+            // Добавляем задержку перед показом MainPanel
+            //Invoke("ShowMainPanel", 0.5f);
+            ShowMainPanel();
         }
         else
         {
             loginMessage.text = result.message;
             loginMessage.color = Color.red;
+        }
+    }
+
+    void ShowMainPanel()
+    {
+        ShowPanel(mainPanel);
+        // Обновляем ProjectsUI, если нужно
+        ProjectsUI projectsUI = mainPanel.GetComponentInChildren<ProjectsUI>();
+        if (projectsUI != null)
+        {
+            // Перезагружаем проекты
+            projectsUI.LoadProjects();
         }
     }
 
