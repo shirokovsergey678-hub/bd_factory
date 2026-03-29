@@ -10,7 +10,7 @@ public class ProjectButtonUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private Button mainButton;
     [SerializeField] private Button deleteButton;
-    [SerializeField] private GameObject deleteButtonObject; // Добавь это поле
+    [SerializeField] private GameObject deleteButtonObject;
 
     private Project currentProject;
 
@@ -20,14 +20,10 @@ public class ProjectButtonUI : MonoBehaviour
     void Start()
     {
         if (mainButton != null)
-        {
             mainButton.onClick.AddListener(() => OnClick?.Invoke(currentProject));
-        }
 
         if (deleteButton != null)
-        {
             deleteButton.onClick.AddListener(() => OnDelete?.Invoke(currentProject));
-        }
     }
 
     public void SetData(Project project)
@@ -41,23 +37,14 @@ public class ProjectButtonUI : MonoBehaviour
             dateText.text = project.CreatedAtFormatted;
 
         if (descriptionText != null)
-        {
-            descriptionText.text = string.IsNullOrEmpty(project.Description)
-                ? "Нет описания"
-                : project.Description;
-        }
+            descriptionText.text = string.IsNullOrEmpty(project.Description) ? "Нет описания" : project.Description;
     }
 
-    // ДОБАВЬ ЭТОТ МЕТОД
     public void ShowDeleteButton(bool show)
     {
         if (deleteButtonObject != null)
-        {
             deleteButtonObject.SetActive(show);
-        }
         else if (deleteButton != null)
-        {
             deleteButton.gameObject.SetActive(show);
-        }
     }
 }

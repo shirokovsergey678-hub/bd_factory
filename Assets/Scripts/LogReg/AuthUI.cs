@@ -1,23 +1,23 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Threading.Tasks;
 
 public class AuthUI : MonoBehaviour
 {
-    [Header("Панели")]
+    [Header("РџР°РЅРµР»Рё")]
     public GameObject loginPanel;
     public GameObject registerPanel;
     public GameObject mainPanel;
 
-    [Header("Логин")]
+    [Header("Р›РѕРіРёРЅ")]
     public TMP_InputField loginUsername;
     public TMP_InputField loginPassword;
     public Button loginButton;
     public Button goToRegisterButton;
     public TextMeshProUGUI loginMessage;
 
-    [Header("Регистрация")]
+    [Header("Р РµРіРёСЃС‚СЂР°С†РёСЏ")]
     public TMP_InputField regUsername;
     public TMP_InputField regEmail;
     public TMP_InputField regPassword;
@@ -26,32 +26,21 @@ public class AuthUI : MonoBehaviour
     public Button backToLoginButton;
     public TextMeshProUGUI regMessage;
 
-    [Header("Главное меню")]
-    public TextMeshProUGUI welcomeText;
-    public Button logoutButton;
-
     private DatabaseManager db;
 
     void Start()
     {
         db = DatabaseManager.Instance;
-
-        if (db == null)
-        {
-            Debug.LogError("DatabaseManager не найден!");
-            return;
-        }
+        if (db == null) return;
 
         loginButton.onClick.AddListener(OnLogin);
         goToRegisterButton.onClick.AddListener(() => ShowPanel(registerPanel));
         registerButton.onClick.AddListener(OnRegister);
         backToLoginButton.onClick.AddListener(() => ShowPanel(loginPanel));
-        logoutButton.onClick.AddListener(OnLogout);
 
         ShowPanel(loginPanel);
     }
 
-    // Убрали async, теперь синхронно
     void OnLogin()
     {
         string username = loginUsername.text;
@@ -59,13 +48,13 @@ public class AuthUI : MonoBehaviour
 
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
         {
-            loginMessage.text = "Заполните все поля!";
+            loginMessage.text = "Р—Р°РїРѕР»РЅРёС‚Рµ РІСЃРµ РїРѕР»СЏ!";
             loginMessage.color = Color.red;
             return;
         }
 
         loginButton.interactable = false;
-        loginMessage.text = "Вход...";
+        loginMessage.text = "Р’С…РѕРґ...";
         loginMessage.color = Color.yellow;
 
         var result = db.Login(username, password);
@@ -76,10 +65,6 @@ public class AuthUI : MonoBehaviour
         {
             loginMessage.text = result.message;
             loginMessage.color = Color.green;
-            welcomeText.text = $"Привет, {result.user.Username}! Роль: {result.user.Role}";
-
-            // Добавляем задержку перед показом MainPanel
-            //Invoke("ShowMainPanel", 0.5f);
             ShowMainPanel();
         }
         else
@@ -89,16 +74,9 @@ public class AuthUI : MonoBehaviour
         }
     }
 
-    void ShowMainPanel()
+    async void ShowMainPanel()
     {
         ShowPanel(mainPanel);
-        // Обновляем ProjectsUI, если нужно
-        ProjectsUI projectsUI = mainPanel.GetComponentInChildren<ProjectsUI>();
-        if (projectsUI != null)
-        {
-            // Перезагружаем проекты
-            projectsUI.LoadProjects();
-        }
     }
 
     async void OnRegister()
@@ -110,34 +88,27 @@ public class AuthUI : MonoBehaviour
 
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
-            regMessage.text = "Заполните все поля!";
+            regMessage.text = "Р—Р°РїРѕР»РЅРёС‚Рµ РІСЃРµ РїРѕР»СЏ!";
             regMessage.color = Color.red;
             return;
         }
 
         if (password != confirm)
         {
-            regMessage.text = "Пароли не совпадают!";
+            regMessage.text = "РџР°СЂРѕР»Рё РЅРµ СЃРѕРІРїР°РґР°СЋС‚!";
             regMessage.color = Color.red;
             return;
         }
 
         if (password.Length < 4)
         {
-            regMessage.text = "Пароль минимум 4 символа!";
-            regMessage.color = Color.red;
-            return;
-        }
-
-        if (!email.Contains("@") || !email.Contains("."))
-        {
-            regMessage.text = "Введите корректный email!";
+            regMessage.text = "РџР°СЂРѕР»СЊ РјРёРЅРёРјСѓРј 4 СЃРёРјРІРѕР»Р°!";
             regMessage.color = Color.red;
             return;
         }
 
         registerButton.interactable = false;
-        regMessage.text = "Регистрация...";
+        regMessage.text = "Р РµРіРёСЃС‚СЂР°С†РёСЏ...";
         regMessage.color = Color.yellow;
 
         var result = await db.Register(username, email, password);
@@ -164,21 +135,11 @@ public class AuthUI : MonoBehaviour
         }
     }
 
-    void OnLogout()
-    {
-        db.Logout();
-        loginUsername.text = "";
-        loginPassword.text = "";
-        loginMessage.text = "";
-        ShowPanel(loginPanel);
-    }
-
     void ShowPanel(GameObject panel)
     {
         loginPanel.SetActive(false);
         registerPanel.SetActive(false);
         mainPanel.SetActive(false);
-
         panel.SetActive(true);
     }
 }

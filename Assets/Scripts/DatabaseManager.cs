@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using System.Data.Odbc;
 using System;
 using System.Threading.Tasks;
@@ -6,13 +6,15 @@ using System.Collections.Generic;
 
 public class DatabaseManager : MonoBehaviour
 {
-    // ODBC строка подключения
+    // ODBC СЃС‚СЂРѕРєР° РїРѕРґРєР»СЋС‡РµРЅРёСЏ
     private string connectionString = "Driver={SQL Server};Server=DESKTOP-CNBOKTJ\\SQLEXPRESS;Database=factory;Trusted_Connection=yes;";
+
+    public event Action OnLoginSuccess;
 
     private static DatabaseManager instance;
     public static DatabaseManager Instance => instance;
 
-    //private set - инкапсулируем от неправильного использования, тобишь можем изменять только в данном классе.
+    //private set - РёРЅРєР°РїСЃСѓР»РёСЂСѓРµРј РѕС‚ РЅРµРїСЂР°РІРёР»СЊРЅРѕРіРѕ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ, С‚РѕР±РёС€СЊ РјРѕР¶РµРј РёР·РјРµРЅСЏС‚СЊ С‚РѕР»СЊРєРѕ РІ РґР°РЅРЅРѕРј РєР»Р°СЃСЃРµ.
     public User CurrentUser { get; private set; }
 
     void Awake()
@@ -28,17 +30,17 @@ public class DatabaseManager : MonoBehaviour
         }
     }
 
-    // Регистрация (с async, тут все ок)
+    // Р РµРіРёСЃС‚СЂР°С†РёСЏ (СЃ async, С‚СѓС‚ РІСЃРµ РѕРє)
     public async Task<(bool success, string message)> Register(string username, string email, string password)
     {
         try
         {
             using (OdbcConnection conn = new OdbcConnection(connectionString))
             {
-                //асинхронно выполняем соединение, дабы не ждать пока оно откроется а выполнять код дальше
+                //Р°СЃРёРЅС…СЂРѕРЅРЅРѕ РІС‹РїРѕР»РЅСЏРµРј СЃРѕРµРґРёРЅРµРЅРёРµ, РґР°Р±С‹ РЅРµ Р¶РґР°С‚СЊ РїРѕРєР° РѕРЅРѕ РѕС‚РєСЂРѕРµС‚СЃСЏ Р° РІС‹РїРѕР»РЅСЏС‚СЊ РєРѕРґ РґР°Р»СЊС€Рµ
                 await conn.OpenAsync();
 
-                // Проверяем, нет ли такого пользователя
+                // РџСЂРѕРІРµСЂСЏРµРј, РЅРµС‚ Р»Рё С‚Р°РєРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
                 string checkQuery = "SELECT COUNT(*) FROM Users WHERE Username = ? OR Email = ?";
                 using (OdbcCommand checkCmd = new OdbcCommand(checkQuery, conn))
                 {
@@ -48,19 +50,19 @@ public class DatabaseManager : MonoBehaviour
                     int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
                     if (count > 0)
                     {
-                        return (false, "Пользователь с таким именем или email уже существует");
+                        return (false, "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЃ С‚Р°РєРёРј РёРјРµРЅРµРј РёР»Рё email СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚");
                     }
                 }
 
-                // Экранируем кавычки в пароле
+                // Р­РєСЂР°РЅРёСЂСѓРµРј РєР°РІС‹С‡РєРё РІ РїР°СЂРѕР»Рµ
                 string escapedPassword = password.Replace("'", "''");
 
-                // Формируем запрос с экранированным паролем
+                // Р¤РѕСЂРјРёСЂСѓРµРј Р·Р°РїСЂРѕСЃ СЃ СЌРєСЂР°РЅРёСЂРѕРІР°РЅРЅС‹Рј РїР°СЂРѕР»РµРј
                 string insertQuery = $@"
                     INSERT INTO Users (Username, Email, PasswordHash, Role) 
                     VALUES (?, ?, HASHBYTES('SHA2_256', '{escapedPassword}'), 'User')";
 
-                Debug.Log($"Регистрация: {username}");
+                Debug.Log($"Р РµРіРёСЃС‚СЂР°С†РёСЏ: {username}");
 
                 using (OdbcCommand insertCmd = new OdbcCommand(insertQuery, conn))
                 {
@@ -68,32 +70,32 @@ public class DatabaseManager : MonoBehaviour
                     insertCmd.Parameters.AddWithValue("@p2", email);
 
                     int rows = await insertCmd.ExecuteNonQueryAsync();
-                    Debug.Log($"Добавлено строк: {rows}");
+                    Debug.Log($"Р”РѕР±Р°РІР»РµРЅРѕ СЃС‚СЂРѕРє: {rows}");
 
                     if (rows > 0)
                     {
-                        return (true, "Регистрация успешна! Теперь можно войти.");
+                        return (true, "Р РµРіРёСЃС‚СЂР°С†РёСЏ СѓСЃРїРµС€РЅР°! РўРµРїРµСЂСЊ РјРѕР¶РЅРѕ РІРѕР№С‚Рё.");
                     }
                     else
                     {
-                        return (false, "Ошибка при создании пользователя");
+                        return (false, "РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ");
                     }
                 }
             }
         }
         catch (OdbcException ex)
         {
-            Debug.LogError($"Ошибка ODBC: {ex.Message}");
-            return (false, $"Ошибка базы данных: {ex.Message}");
+            Debug.LogError($"РћС€РёР±РєР° ODBC: {ex.Message}");
+            return (false, $"РћС€РёР±РєР° Р±Р°Р·С‹ РґР°РЅРЅС‹С…: {ex.Message}");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Ошибка: {ex.Message}");
-            return (false, $"Ошибка: {ex.Message}");
+            Debug.LogError($"РћС€РёР±РєР°: {ex.Message}");
+            return (false, $"РћС€РёР±РєР°: {ex.Message}");
         }
     }
 
-    // Вход (синхронная версия, без async)
+    // Р’С…РѕРґ (СЃРёРЅС…СЂРѕРЅРЅР°СЏ РІРµСЂСЃРёСЏ, Р±РµР· async)
     public (bool success, User user, string message) Login(string username, string password)
     {
         try
@@ -101,16 +103,14 @@ public class DatabaseManager : MonoBehaviour
             using (OdbcConnection conn = new OdbcConnection(connectionString))
             {
                 conn.Open();
-                Debug.Log("Подключение к БД установлено");
 
-                // Экранируем кавычки в пароле
                 string escapedPassword = password.Replace("'", "''");
 
                 string query = $@"
-                    SELECT Id, Username, Email, Role 
-                    FROM Users 
-                    WHERE Username = ? 
-                    AND PasswordHash = HASHBYTES('SHA2_256', '{escapedPassword}')";
+                SELECT Id, Username, Email, Role 
+                FROM Users 
+                WHERE Username = ? 
+                AND PasswordHash = HASHBYTES('SHA2_256', '{escapedPassword}')";
 
                 using (OdbcCommand cmd = new OdbcCommand(query, conn))
                 {
@@ -128,17 +128,21 @@ public class DatabaseManager : MonoBehaviour
                                 Role = reader.GetString(3)
                             };
 
-                            Debug.Log($"Успешный вход: {CurrentUser.Username}");
-                            return (true, CurrentUser, "Добро пожаловать!");
+                            Debug.Log($"LOGIN OK: {CurrentUser.Username}");
+
+                            // рџ”Ґ СѓРІРµРґРѕРјР»СЏРµРј UI
+                            OnLoginSuccess?.Invoke();
+
+                            return (true, CurrentUser, "Р”РѕР±СЂРѕ РїРѕР¶Р°Р»РѕРІР°С‚СЊ!");
                         }
                     }
                 }
             }
-            return (false, null, "Неверный логин или пароль");
+            return (false, null, "РќРµРІРµСЂРЅС‹Р№ Р»РѕРіРёРЅ РёР»Рё РїР°СЂРѕР»СЊ");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Ошибка: {ex.Message}");
+            Debug.LogError($"РћС€РёР±РєР°: {ex.Message}");
             return (false, null, ex.Message);
         }
     }
@@ -146,43 +150,43 @@ public class DatabaseManager : MonoBehaviour
     public void Logout()
     {
         CurrentUser = null;
-        Debug.Log("Выход выполнен");
+        Debug.Log("Р’С‹С…РѕРґ РІС‹РїРѕР»РЅРµРЅ");
     }
 
     public bool IsAdmin => CurrentUser != null && CurrentUser.Role == "Admin";
 
-    // ==================== РАБОТА С ПРОЕКТАМИ ====================
+    // ==================== Р РђР‘РћРўРђ РЎ РџР РћР•РљРўРђРњР ====================
 
-    // Получить все проекты (для обычного пользователя — только свои, для админа — все)
-    // В DatabaseManager.cs, исправленный метод GetProjectsAsync
+    // РџРѕР»СѓС‡РёС‚СЊ РІСЃРµ РїСЂРѕРµРєС‚С‹ (РґР»СЏ РѕР±С‹С‡РЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ вЂ” С‚РѕР»СЊРєРѕ СЃРІРѕРё, РґР»СЏ Р°РґРјРёРЅР° вЂ” РІСЃРµ)
+    // Р’ DatabaseManager.cs, РёСЃРїСЂР°РІР»РµРЅРЅС‹Р№ РјРµС‚РѕРґ GetProjectsAsync
     public async Task<List<Project>> GetProjectsAsync()
     {
         var projects = new List<Project>();
 
         try
         {
-            // ВАЖНО: Проверяем, есть ли текущий пользователь
+            // Р’РђР–РќРћ: РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ
             if (CurrentUser == null)
             {
-                Debug.LogError("GetProjectsAsync: CurrentUser = null! Пользователь не авторизован");
+                Debug.LogError("GetProjectsAsync: CurrentUser = null! РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ Р°РІС‚РѕСЂРёР·РѕРІР°РЅ");
                 return projects;
             }
 
             using (OdbcConnection conn = new OdbcConnection(connectionString))
             {
                 await conn.OpenAsync();
-                Debug.Log($"GetProjectsAsync: Подключение открыто. IsAdmin = {IsAdmin}, CurrentUser.Id = {CurrentUser.Id}");
+                Debug.Log($"GetProjectsAsync: РџРѕРґРєР»СЋС‡РµРЅРёРµ РѕС‚РєСЂС‹С‚Рѕ. IsAdmin = {IsAdmin}, CurrentUser.Id = {CurrentUser.Id}");
 
                 string query;
                 if (IsAdmin)
                 {
                     query = "SELECT Id, Name, Description, CreatedBy, CreatedAt, IsArchived FROM Projects WHERE IsArchived = 0 ORDER BY CreatedAt DESC";
-                    Debug.Log("GetProjectsAsync: Запрос для админа (все проекты)");
+                    Debug.Log("GetProjectsAsync: Р—Р°РїСЂРѕСЃ РґР»СЏ Р°РґРјРёРЅР° (РІСЃРµ РїСЂРѕРµРєС‚С‹)");
                 }
                 else
                 {
                     query = "SELECT Id, Name, Description, CreatedBy, CreatedAt, IsArchived FROM Projects WHERE CreatedBy = ? AND IsArchived = 0 ORDER BY CreatedAt DESC";
-                    Debug.Log($"GetProjectsAsync: Запрос для обычного пользователя (UserId = {CurrentUser.Id})");
+                    Debug.Log($"GetProjectsAsync: Р—Р°РїСЂРѕСЃ РґР»СЏ РѕР±С‹С‡РЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ (UserId = {CurrentUser.Id})");
                 }
 
                 using (OdbcCommand cmd = new OdbcCommand(query, conn))
@@ -206,23 +210,23 @@ public class DatabaseManager : MonoBehaviour
                                 IsArchived = reader.GetBoolean(5)
                             };
                             projects.Add(project);
-                            Debug.Log($"Найден проект: Id={project.Id}, Name={project.Name}");
+                            Debug.Log($"РќР°Р№РґРµРЅ РїСЂРѕРµРєС‚: Id={project.Id}, Name={project.Name}");
                         }
-                        Debug.Log($"GetProjectsAsync: Всего найдено проектов: {projects.Count}");
+                        Debug.Log($"GetProjectsAsync: Р’СЃРµРіРѕ РЅР°Р№РґРµРЅРѕ РїСЂРѕРµРєС‚РѕРІ: {projects.Count}");
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Ошибка при загрузке проектов: {ex.Message}");
+            Debug.LogError($"РћС€РёР±РєР° РїСЂРё Р·Р°РіСЂСѓР·РєРµ РїСЂРѕРµРєС‚РѕРІ: {ex.Message}");
             Debug.LogError($"Stack trace: {ex.StackTrace}");
         }
 
         return projects;
     }
 
-    // Создать новый проект
+    // РЎРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№ РїСЂРѕРµРєС‚
     public async Task<(bool success, string message, Project project)> CreateProjectAsync(string name, string description)
     {
         try
@@ -231,7 +235,7 @@ public class DatabaseManager : MonoBehaviour
             {
                 await conn.OpenAsync();
 
-                // Проверяем, нет ли проекта с таким именем у пользователя
+                // РџСЂРѕРІРµСЂСЏРµРј, РЅРµС‚ Р»Рё РїСЂРѕРµРєС‚Р° СЃ С‚Р°РєРёРј РёРјРµРЅРµРј Сѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
                 string checkQuery = "SELECT COUNT(*) FROM Projects WHERE Name = ? AND CreatedBy = ?";
                 using (OdbcCommand checkCmd = new OdbcCommand(checkQuery, conn))
                 {
@@ -241,11 +245,11 @@ public class DatabaseManager : MonoBehaviour
                     int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
                     if (count > 0)
                     {
-                        return (false, "У вас уже есть проект с таким названием", null);
+                        return (false, "РЈ РІР°СЃ СѓР¶Рµ РµСЃС‚СЊ РїСЂРѕРµРєС‚ СЃ С‚Р°РєРёРј РЅР°Р·РІР°РЅРёРµРј", null);
                     }
                 }
 
-                // Создаем проект
+                // РЎРѕР·РґР°РµРј РїСЂРѕРµРєС‚
                 string insertQuery = @"
                     INSERT INTO Projects (Name, Description, CreatedBy) 
                     VALUES (?, ?, ?);
@@ -269,18 +273,18 @@ public class DatabaseManager : MonoBehaviour
                         IsArchived = false
                     };
 
-                    return (true, "Проект успешно создан!", newProject);
+                    return (true, "РџСЂРѕРµРєС‚ СѓСЃРїРµС€РЅРѕ СЃРѕР·РґР°РЅ!", newProject);
                 }
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Ошибка при создании проекта: {ex.Message}");
-            return (false, $"Ошибка: {ex.Message}", null);
+            Debug.LogError($"РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё РїСЂРѕРµРєС‚Р°: {ex.Message}");
+            return (false, $"РћС€РёР±РєР°: {ex.Message}", null);
         }
     }
 
-    // Удалить проект (архивировать)
+    // РЈРґР°Р»РёС‚СЊ РїСЂРѕРµРєС‚ (Р°СЂС…РёРІРёСЂРѕРІР°С‚СЊ)
     public async Task<(bool success, string message)> ArchiveProjectAsync(int projectId)
     {
         try
@@ -297,18 +301,18 @@ public class DatabaseManager : MonoBehaviour
 
                     if (rows > 0)
                     {
-                        return (true, "Проект удален");
+                        return (true, "РџСЂРѕРµРєС‚ СѓРґР°Р»РµРЅ");
                     }
                     else
                     {
-                        return (false, "Проект не найден");
+                        return (false, "РџСЂРѕРµРєС‚ РЅРµ РЅР°Р№РґРµРЅ");
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Ошибка при удалении проекта: {ex.Message}");
+            Debug.LogError($"РћС€РёР±РєР° РїСЂРё СѓРґР°Р»РµРЅРёРё РїСЂРѕРµРєС‚Р°: {ex.Message}");
             return (false, ex.Message);
         }
     }

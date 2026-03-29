@@ -2652,8 +2652,6 @@ MonoBehaviour:
   registerButton: {fileID: 904058954}
   backToLoginButton: {fileID: 1097970296}
   regMessage: {fileID: 1410508208}
-  welcomeText: {fileID: 1013188476}
-  logoutButton: {fileID: 224848999}
 --- !u!1 &478549205
 GameObject:
   m_ObjectHideFlags: 0
@@ -8039,15 +8037,15 @@ MonoBehaviour:
   projectsContainer: {fileID: 1651948723}
   projectButtonPrefab: {fileID: 5134123993208947188, guid: 0065df7e4933a184395d8f170d96dc8d, type: 3}
   addProjectButton: {fileID: 779052786}
+  logoutButton: {fileID: 224848999}
+  welcomeText: {fileID: 1013188476}
+  emptyMessageText: {fileID: 904267761}
   createProjectPanel: {fileID: 51208857}
   projectNameInput: {fileID: 199465177}
   projectDescriptionInput: {fileID: 734380182}
   confirmCreateButton: {fileID: 459895940}
   cancelCreateButton: {fileID: 845944166}
   createProjectMessage: {fileID: 602753180}
-  logoutButton: {fileID: 224848999}
-  welcomeText: {fileID: 1013188476}
-  emptyMessageText: {fileID: 904267761}
 --- !u!114 &1651948725
 MonoBehaviour:
   m_ObjectHideFlags: 0
