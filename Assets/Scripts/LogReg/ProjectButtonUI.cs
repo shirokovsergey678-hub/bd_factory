@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 
+//Скрипт для префаба кнопки проекта в списке проектов
 public class ProjectButtonUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI nameText;
@@ -10,7 +11,6 @@ public class ProjectButtonUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private Button mainButton;
     [SerializeField] private Button deleteButton;
-    [SerializeField] private GameObject deleteButtonObject;
 
     private Project currentProject;
 
@@ -38,13 +38,5 @@ public class ProjectButtonUI : MonoBehaviour
 
         if (descriptionText != null)
             descriptionText.text = string.IsNullOrEmpty(project.Description) ? "Нет описания" : project.Description;
-    }
-
-    public void ShowDeleteButton(bool show)
-    {
-        if (deleteButtonObject != null)
-            deleteButtonObject.SetActive(show);
-        else if (deleteButton != null)
-            deleteButton.gameObject.SetActive(show);
     }
 }

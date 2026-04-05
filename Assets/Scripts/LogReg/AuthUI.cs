@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Threading.Tasks;
 
+//Логин/регистрация
 public class AuthUI : MonoBehaviour
 {
     [Header("Панели")]

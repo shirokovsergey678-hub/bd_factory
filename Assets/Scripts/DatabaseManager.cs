@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+//Менеджер для подключения к БД
 public class DatabaseManager : MonoBehaviour
 {
     // ODBC строка подключения

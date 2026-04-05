@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+//Основная форма с проектами
 public class ProjectsUI : MonoBehaviour
 {
     public Transform projectsContainer;
@@ -107,7 +108,6 @@ public class ProjectsUI : MonoBehaviour
 
             if (db.IsAdmin)
             {
-                ui.ShowDeleteButton(true);
                 ui.OnDelete += OnDeleteProject;
             }
         }
@@ -163,5 +163,8 @@ public class ProjectsUI : MonoBehaviour
         AuthUI authUI = FindObjectOfType<AuthUI>(true);
         authUI.loginPanel.SetActive(true);
         authUI.mainPanel.SetActive(false);
+        authUI.loginUsername.text = "";
+        authUI.loginPassword.text = "";
+        authUI.loginMessage.text = "";
     }
 }
