@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Threading.Tasks;
 
-//Логин/регистрация
+// Логин/регистрация
 public class AuthUI : MonoBehaviour
 {
     [Header("Панели")]
@@ -42,7 +42,7 @@ public class AuthUI : MonoBehaviour
         ShowPanel(loginPanel);
     }
 
-    void OnLogin()
+    async void OnLogin()
     {
         string username = loginUsername.text;
         string password = loginPassword.text;
@@ -58,7 +58,7 @@ public class AuthUI : MonoBehaviour
         loginMessage.text = "Вход...";
         loginMessage.color = Color.yellow;
 
-        var result = db.Login(username, password);
+        var result = await db.Login(username, password);
 
         loginButton.interactable = true;
 
@@ -75,7 +75,7 @@ public class AuthUI : MonoBehaviour
         }
     }
 
-    async void ShowMainPanel()
+    void ShowMainPanel()
     {
         ShowPanel(mainPanel);
     }
@@ -126,7 +126,7 @@ public class AuthUI : MonoBehaviour
             regPassword.text = "";
             regConfirmPassword.text = "";
 
-            await Task.Delay(2000);
+            await Task.Delay(1000);
             ShowPanel(loginPanel);
         }
         else

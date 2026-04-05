@@ -4,7 +4,7 @@ using TMPro;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-//Основная форма с проектами
+// Основная форма с проектами
 public class ProjectsUI : MonoBehaviour
 {
     public Transform projectsContainer;
@@ -50,8 +50,6 @@ public class ProjectsUI : MonoBehaviour
 
     void OnLoginSuccess()
     {
-        Debug.Log("ProjectsUI: получен сигнал логина");
-
         RefreshUI();
     }
 
@@ -62,11 +60,9 @@ public class ProjectsUI : MonoBehaviour
 
         if (db?.CurrentUser == null)
         {
-            Debug.LogError("RefreshUI: CurrentUser = null");
+            Debug.LogError("CurrentUser = null");
             return;
         }
-
-        Debug.Log($"RefreshUI OK: {db.CurrentUser.Username}");
 
         welcomeText.text = $"Привет, {db.CurrentUser.Username}!\n{(db.IsAdmin ? "Администратор" : "Пользователь")}";
 
@@ -76,14 +72,9 @@ public class ProjectsUI : MonoBehaviour
     async void LoadProjects()
     {
         ClearProjectsContainer();
-
         emptyMessageText.gameObject.SetActive(false);
 
-        Debug.Log("LoadProjects: загрузка...");
-
         projects = await db.GetProjectsAsync();
-
-        Debug.Log($"LoadProjects: найдено {projects.Count}");
 
         if (projects.Count == 0)
         {
@@ -152,7 +143,14 @@ public class ProjectsUI : MonoBehaviour
         if (result.success)
         {
             createProjectPanel.SetActive(false);
+            projectNameInput.text = "";
+            projectDescriptionInput.text = "";
             LoadProjects();
+        }
+        else
+        {
+            createProjectMessage.text = result.message;
+            createProjectMessage.color = Color.red;
         }
     }
 

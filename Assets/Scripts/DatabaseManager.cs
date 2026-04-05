@@ -1,22 +1,20 @@
 ﻿using UnityEngine;
-using System.Data.Odbc;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 
-//Менеджер для подключения к БД
 public class DatabaseManager : MonoBehaviour
 {
-    // ODBC строка подключения
-    private string connectionString = "Driver={SQL Server};Server=DESKTOP-CNBOKTJ\\SQLEXPRESS;Database=factory;Trusted_Connection=yes;";
+    private string connectionString = "Server=localhost;Database=factory;Integrated Security=True;";
 
     public event Action OnLoginSuccess;
 
     private static DatabaseManager instance;
     public static DatabaseManager Instance => instance;
 
-    //private set - инкапсулируем от неправильного использования, тобишь можем изменять только в данном классе.
     public User CurrentUser { get; private set; }
+    public bool IsAdmin => CurrentUser != null && CurrentUser.Role == "Admin";
 
     void Awake()
     {
@@ -25,125 +23,78 @@ public class DatabaseManager : MonoBehaviour
             instance = this;
             DontDestroyOnLoad(gameObject);
         }
-        else
-        {
-            Destroy(gameObject);
-        }
+        else Destroy(gameObject);
     }
 
-    // Регистрация (с async, тут все ок)
     public async Task<(bool success, string message)> Register(string username, string email, string password)
     {
         try
         {
-            using (OdbcConnection conn = new OdbcConnection(connectionString))
-            {
-                //асинхронно выполняем соединение, дабы не ждать пока оно откроется а выполнять код дальше
-                await conn.OpenAsync();
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync();
 
-                // Проверяем, нет ли такого пользователя
-                string checkQuery = "SELECT COUNT(*) FROM Users WHERE Username = ? OR Email = ?";
-                using (OdbcCommand checkCmd = new OdbcCommand(checkQuery, conn))
-                {
-                    checkCmd.Parameters.AddWithValue("@p1", username);
-                    checkCmd.Parameters.AddWithValue("@p2", email);
+            var checkCmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE Username=@u OR Email=@e", conn);
+            checkCmd.Parameters.AddWithValue("@u", username);
+            checkCmd.Parameters.AddWithValue("@e", email);
 
-                    int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
-                    if (count > 0)
-                    {
-                        return (false, "Пользователь с таким именем или email уже существует");
-                    }
-                }
+            int count = (int)await checkCmd.ExecuteScalarAsync();
+            if (count > 0)
+                return (false, "Пользователь уже существует");
 
-                // Экранируем кавычки в пароле
-                string escapedPassword = password.Replace("'", "''");
+            var cmd = new SqlCommand(@"
+                                    INSERT INTO Users (Username, Email, PasswordHash, Role)
+                                    VALUES (@u, @e, HASHBYTES('SHA2_256', CAST(@p AS NVARCHAR(4000))), 'User')", conn);
 
-                // Формируем запрос с экранированным паролем
-                string insertQuery = $@"
-                    INSERT INTO Users (Username, Email, PasswordHash, Role) 
-                    VALUES (?, ?, HASHBYTES('SHA2_256', '{escapedPassword}'), 'User')";
+            cmd.Parameters.AddWithValue("@u", username);
+            cmd.Parameters.AddWithValue("@e", email);
+            cmd.Parameters.AddWithValue("@p", password);
 
-                Debug.Log($"Регистрация: {username}");
-
-                using (OdbcCommand insertCmd = new OdbcCommand(insertQuery, conn))
-                {
-                    insertCmd.Parameters.AddWithValue("@p1", username);
-                    insertCmd.Parameters.AddWithValue("@p2", email);
-
-                    int rows = await insertCmd.ExecuteNonQueryAsync();
-                    Debug.Log($"Добавлено строк: {rows}");
-
-                    if (rows > 0)
-                    {
-                        return (true, "Регистрация успешна! Теперь можно войти.");
-                    }
-                    else
-                    {
-                        return (false, "Ошибка при создании пользователя");
-                    }
-                }
-            }
-        }
-        catch (OdbcException ex)
-        {
-            Debug.LogError($"Ошибка ODBC: {ex.Message}");
-            return (false, $"Ошибка базы данных: {ex.Message}");
+            await cmd.ExecuteNonQueryAsync();
+            return (true, "Регистрация успешна");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Ошибка: {ex.Message}");
-            return (false, $"Ошибка: {ex.Message}");
+            Debug.LogError(ex);
+            return (false, ex.Message);
         }
     }
 
-    // Вход (синхронная версия, без async)
-    public (bool success, User user, string message) Login(string username, string password)
+    public async Task<(bool success, User user, string message)> Login(string username, string password)
     {
         try
         {
-            using (OdbcConnection conn = new OdbcConnection(connectionString))
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync();
+
+            var cmd = new SqlCommand(@"
+                                    SELECT Id, Username, Email, Role
+                                    FROM Users
+                                    WHERE Username=@u AND PasswordHash = HASHBYTES('SHA2_256', CAST(@p AS NVARCHAR(4000)))", conn);
+
+            cmd.Parameters.AddWithValue("@u", username);
+            cmd.Parameters.AddWithValue("@p", password);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
             {
-                conn.Open();
-
-                string escapedPassword = password.Replace("'", "''");
-
-                string query = $@"
-                SELECT Id, Username, Email, Role 
-                FROM Users 
-                WHERE Username = ? 
-                AND PasswordHash = HASHBYTES('SHA2_256', '{escapedPassword}')";
-
-                using (OdbcCommand cmd = new OdbcCommand(query, conn))
+                CurrentUser = new User
                 {
-                    cmd.Parameters.AddWithValue("@username", username);
+                    Id = reader.GetInt32(0),
+                    Username = reader.GetString(1),
+                    Email = reader.GetString(2),
+                    Role = reader.GetString(3)
+                };
 
-                    using (OdbcDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            CurrentUser = new User
-                            {
-                                Id = reader.GetInt32(0),
-                                Username = reader.GetString(1),
-                                Email = reader.GetString(2),
-                                Role = reader.GetString(3)
-                            };
-
-                            Debug.Log($"LOGIN OK: {CurrentUser.Username}");
-
-                            // 🔥 уведомляем UI
-                            OnLoginSuccess?.Invoke();
-
-                            return (true, CurrentUser, "Добро пожаловать!");
-                        }
-                    }
-                }
+                OnLoginSuccess?.Invoke();
+                return (true, CurrentUser, "Добро пожаловать");
             }
+
             return (false, null, "Неверный логин или пароль");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Ошибка: {ex.Message}");
+            Debug.LogError(ex);
             return (false, null, ex.Message);
         }
     }
@@ -151,169 +102,84 @@ public class DatabaseManager : MonoBehaviour
     public void Logout()
     {
         CurrentUser = null;
-        Debug.Log("Выход выполнен");
     }
 
-    public bool IsAdmin => CurrentUser != null && CurrentUser.Role == "Admin";
-
-    // ==================== РАБОТА С ПРОЕКТАМИ ====================
-
-    // Получить все проекты (для обычного пользователя — только свои, для админа — все)
-    // В DatabaseManager.cs, исправленный метод GetProjectsAsync
     public async Task<List<Project>> GetProjectsAsync()
     {
         var projects = new List<Project>();
 
-        try
+        if (CurrentUser == null)
+            return projects;
+
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        string query = IsAdmin
+            ? "SELECT Id, Name, Description, CreatedBy, CreatedAt, IsArchived FROM Projects WHERE IsArchived=0 ORDER BY CreatedAt DESC"
+            : "SELECT Id, Name, Description, CreatedBy, CreatedAt, IsArchived FROM Projects WHERE CreatedBy=@id AND IsArchived=0 ORDER BY CreatedAt DESC";
+
+        var cmd = new SqlCommand(query, conn);
+
+        if (!IsAdmin)
+            cmd.Parameters.AddWithValue("@id", CurrentUser.Id);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
         {
-            // ВАЖНО: Проверяем, есть ли текущий пользователь
-            if (CurrentUser == null)
+            projects.Add(new Project
             {
-                Debug.LogError("GetProjectsAsync: CurrentUser = null! Пользователь не авторизован");
-                return projects;
-            }
-
-            using (OdbcConnection conn = new OdbcConnection(connectionString))
-            {
-                await conn.OpenAsync();
-                Debug.Log($"GetProjectsAsync: Подключение открыто. IsAdmin = {IsAdmin}, CurrentUser.Id = {CurrentUser.Id}");
-
-                string query;
-                if (IsAdmin)
-                {
-                    query = "SELECT Id, Name, Description, CreatedBy, CreatedAt, IsArchived FROM Projects WHERE IsArchived = 0 ORDER BY CreatedAt DESC";
-                    Debug.Log("GetProjectsAsync: Запрос для админа (все проекты)");
-                }
-                else
-                {
-                    query = "SELECT Id, Name, Description, CreatedBy, CreatedAt, IsArchived FROM Projects WHERE CreatedBy = ? AND IsArchived = 0 ORDER BY CreatedAt DESC";
-                    Debug.Log($"GetProjectsAsync: Запрос для обычного пользователя (UserId = {CurrentUser.Id})");
-                }
-
-                using (OdbcCommand cmd = new OdbcCommand(query, conn))
-                {
-                    if (!IsAdmin)
-                    {
-                        cmd.Parameters.AddWithValue("@userId", CurrentUser.Id);
-                    }
-
-                    using (OdbcDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var project = new Project
-                            {
-                                Id = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                Description = reader.IsDBNull(2) ? "" : reader.GetString(2),
-                                CreatedBy = reader.GetInt32(3),
-                                CreatedAt = reader.GetDateTime(4),
-                                IsArchived = reader.GetBoolean(5)
-                            };
-                            projects.Add(project);
-                            Debug.Log($"Найден проект: Id={project.Id}, Name={project.Name}");
-                        }
-                        Debug.Log($"GetProjectsAsync: Всего найдено проектов: {projects.Count}");
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Ошибка при загрузке проектов: {ex.Message}");
-            Debug.LogError($"Stack trace: {ex.StackTrace}");
+                Id = reader.GetInt32(0),
+                Name = reader.GetString(1),
+                Description = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                CreatedBy = reader.GetInt32(3),
+                CreatedAt = reader.GetDateTime(4),
+                IsArchived = reader.GetBoolean(5)
+            });
         }
 
         return projects;
     }
 
-    // Создать новый проект
-    public async Task<(bool success, string message, Project project)> CreateProjectAsync(string name, string description)
+    public async Task<(bool success, string message)> CreateProjectAsync(string name, string description)
     {
         try
         {
-            using (OdbcConnection conn = new OdbcConnection(connectionString))
-            {
-                await conn.OpenAsync();
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync();
 
-                // Проверяем, нет ли проекта с таким именем у пользователя
-                string checkQuery = "SELECT COUNT(*) FROM Projects WHERE Name = ? AND CreatedBy = ?";
-                using (OdbcCommand checkCmd = new OdbcCommand(checkQuery, conn))
-                {
-                    checkCmd.Parameters.AddWithValue("@name", name);
-                    checkCmd.Parameters.AddWithValue("@userId", CurrentUser.Id);
+            var cmd = new SqlCommand(@"
+                                    INSERT INTO Projects (Name, Description, CreatedBy)
+                                    VALUES (@n, @d, @u)", conn);
 
-                    int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
-                    if (count > 0)
-                    {
-                        return (false, "У вас уже есть проект с таким названием", null);
-                    }
-                }
+            cmd.Parameters.AddWithValue("@n", name);
+            cmd.Parameters.AddWithValue("@d", description ?? "");
+            cmd.Parameters.AddWithValue("@u", CurrentUser.Id);
 
-                // Создаем проект
-                string insertQuery = @"
-                    INSERT INTO Projects (Name, Description, CreatedBy) 
-                    VALUES (?, ?, ?);
-                    SELECT SCOPE_IDENTITY();";
-
-                using (OdbcCommand insertCmd = new OdbcCommand(insertQuery, conn))
-                {
-                    insertCmd.Parameters.AddWithValue("@name", name);
-                    insertCmd.Parameters.AddWithValue("@description", description ?? "");
-                    insertCmd.Parameters.AddWithValue("@userId", CurrentUser.Id);
-
-                    int newId = Convert.ToInt32(await insertCmd.ExecuteScalarAsync());
-
-                    var newProject = new Project
-                    {
-                        Id = newId,
-                        Name = name,
-                        Description = description ?? "",
-                        CreatedBy = CurrentUser.Id,
-                        CreatedAt = DateTime.Now,
-                        IsArchived = false
-                    };
-
-                    return (true, "Проект успешно создан!", newProject);
-                }
-            }
+            await cmd.ExecuteNonQueryAsync();
+            return (true, "Проект создан");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Ошибка при создании проекта: {ex.Message}");
-            return (false, $"Ошибка: {ex.Message}", null);
+            return (false, ex.Message);
         }
     }
 
-    // Удалить проект (архивировать)
-    public async Task<(bool success, string message)> ArchiveProjectAsync(int projectId)
+    public async Task<(bool success, string message)> ArchiveProjectAsync(int id)
     {
         try
         {
-            using (OdbcConnection conn = new OdbcConnection(connectionString))
-            {
-                await conn.OpenAsync();
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync();
 
-                string query = "UPDATE Projects SET IsArchived = 1 WHERE Id = ?";
-                using (OdbcCommand cmd = new OdbcCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@projectId", projectId);
-                    int rows = await cmd.ExecuteNonQueryAsync();
+            var cmd = new SqlCommand("UPDATE Projects SET IsArchived=1 WHERE Id=@id", conn);
+            cmd.Parameters.AddWithValue("@id", id);
 
-                    if (rows > 0)
-                    {
-                        return (true, "Проект удален");
-                    }
-                    else
-                    {
-                        return (false, "Проект не найден");
-                    }
-                }
-            }
+            int rows = await cmd.ExecuteNonQueryAsync();
+            return (rows > 0, rows > 0 ? "Удалено" : "Не найдено");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Ошибка при удалении проекта: {ex.Message}");
             return (false, ex.Message);
         }
     }
