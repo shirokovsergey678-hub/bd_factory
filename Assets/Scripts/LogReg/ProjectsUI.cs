@@ -26,20 +26,17 @@ public class ProjectsUI : MonoBehaviour
 
     void Awake()
     {
+        //инициализация менеджера
         db = DatabaseManager.Instance;
 
         if (db != null)
-        {
             db.OnLoginSuccess += OnLoginSuccess;
-        }
     }
 
     void OnDestroy()
     {
         if (db != null)
-        {
             db.OnLoginSuccess -= OnLoginSuccess;
-        }
     }
 
     void Start()

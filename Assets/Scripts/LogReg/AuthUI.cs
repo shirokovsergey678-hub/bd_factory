@@ -87,7 +87,7 @@ public class AuthUI : MonoBehaviour
         string password = regPassword.text;
         string confirm = regConfirmPassword.text;
 
-        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirm))
         {
             regMessage.text = "Заполните все поля!";
             regMessage.color = Color.red;
