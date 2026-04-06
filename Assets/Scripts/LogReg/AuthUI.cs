@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 
 // Логин/регистрация
 public class AuthUI : MonoBehaviour
@@ -17,6 +18,7 @@ public class AuthUI : MonoBehaviour
     public Button loginButton;
     public Button goToRegisterButton;
     public TextMeshProUGUI loginMessage;
+    public Toggle LoginShowPasswordToggle;
 
     [Header("Регистрация")]
     public TMP_InputField regUsername;
@@ -26,6 +28,7 @@ public class AuthUI : MonoBehaviour
     public Button registerButton;
     public Button backToLoginButton;
     public TextMeshProUGUI regMessage;
+    public Toggle RegistrationShowPasswordToggle;
 
     private DatabaseManager db;
 
@@ -40,6 +43,56 @@ public class AuthUI : MonoBehaviour
         backToLoginButton.onClick.AddListener(() => ShowPanel(loginPanel));
 
         ShowPanel(loginPanel);
+
+        ShowPassword();
+    }
+    
+    public void ShowPassword()
+    {
+        if (RegistrationShowPasswordToggle.isOn)
+        {
+            regPassword.contentType = TMP_InputField.ContentType.Standard;
+            regConfirmPassword.contentType = TMP_InputField.ContentType.Standard;
+        }
+        else
+        {
+            regPassword.contentType = TMP_InputField.ContentType.Password;
+            regConfirmPassword.contentType = TMP_InputField.ContentType.Password;
+        }        
+        if (LoginShowPasswordToggle.isOn)
+        {
+            loginPassword.contentType = TMP_InputField.ContentType.Standard;
+        }
+        else
+        {
+            loginPassword.contentType = TMP_InputField.ContentType.Password;
+        }
+
+        // обновить поле
+        regPassword.ForceLabelUpdate();
+        regConfirmPassword.ForceLabelUpdate();
+        loginPassword.ForceLabelUpdate();
+    }
+
+    Color colorOK = new Color(255, 255, 255);
+    Color colorERR = new Color(255, 0, 0);
+
+    void CheckInputFieldColor(TMP_InputField inputField)
+    {
+        if (string.IsNullOrEmpty(inputField.text))
+        {
+            inputField.GetComponent<Image>().color = colorERR;
+        }
+        else inputField.GetComponent<Image>().color = colorOK;
+    }
+    public void ResetColorInputField()
+    {
+        loginUsername.GetComponent<Image>().color = colorOK;
+        loginPassword.GetComponent<Image>().color = colorOK;
+        regUsername.GetComponent<Image>().color = colorOK;
+        regEmail.GetComponent<Image>().color = colorOK;
+        regPassword.GetComponent<Image>().color = colorOK;
+        regConfirmPassword.GetComponent<Image>().color = colorOK;
     }
 
     async void OnLogin()
@@ -47,8 +100,11 @@ public class AuthUI : MonoBehaviour
         string username = loginUsername.text;
         string password = loginPassword.text;
 
+        CheckInputFieldColor(loginUsername);
+        CheckInputFieldColor(loginPassword);
+
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-        {
+        { 
             loginMessage.text = "Заполните все поля!";
             loginMessage.color = Color.red;
             return;
@@ -86,6 +142,11 @@ public class AuthUI : MonoBehaviour
         string email = regEmail.text;
         string password = regPassword.text;
         string confirm = regConfirmPassword.text;
+
+        CheckInputFieldColor(regUsername);
+        CheckInputFieldColor(regEmail);
+        CheckInputFieldColor(regPassword);
+        CheckInputFieldColor(regConfirmPassword);
 
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirm))
         {

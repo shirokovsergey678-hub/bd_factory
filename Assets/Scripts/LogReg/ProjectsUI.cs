@@ -151,7 +151,7 @@ public class ProjectsUI : MonoBehaviour
         }
     }
 
-    void OnLogout()
+    public void OnLogout()
     {
         db.Logout();
 
@@ -161,5 +161,6 @@ public class ProjectsUI : MonoBehaviour
         authUI.loginUsername.text = "";
         authUI.loginPassword.text = "";
         authUI.loginMessage.text = "";
+        authUI.ResetColorInputField();
     }
 }
