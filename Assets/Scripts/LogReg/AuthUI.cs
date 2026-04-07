@@ -17,7 +17,7 @@ public class AuthUI : MonoBehaviour
     public TMP_InputField loginPassword;
     public Button loginButton;
     public Button goToRegisterButton;
-    public TextMeshProUGUI loginMessage;
+    public TMP_InputField loginMessage;
     public Toggle LoginShowPasswordToggle;
 
     [Header("Регистрация")]
@@ -106,13 +106,13 @@ public class AuthUI : MonoBehaviour
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
         { 
             loginMessage.text = "Заполните все поля!";
-            loginMessage.color = Color.red;
+            loginMessage.textComponent.color = Color.red;
             return;
         }
 
         loginButton.interactable = false;
         loginMessage.text = "Вход...";
-        loginMessage.color = Color.yellow;
+        loginMessage.textComponent.color = Color.yellow;
 
         var result = await db.Login(username, password);
 
@@ -121,13 +121,13 @@ public class AuthUI : MonoBehaviour
         if (result.success)
         {
             loginMessage.text = result.message;
-            loginMessage.color = Color.green;
+            loginMessage.textComponent.color = Color.green;
             ShowMainPanel();
         }
         else
         {
             loginMessage.text = result.message;
-            loginMessage.color = Color.red;
+            loginMessage.textComponent.color = Color.red;
         }
     }
 
