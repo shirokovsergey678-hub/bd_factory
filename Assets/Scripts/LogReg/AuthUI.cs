@@ -17,7 +17,7 @@ public class AuthUI : MonoBehaviour
     public TMP_InputField loginPassword;
     public Button loginButton;
     public Button goToRegisterButton;
-    public TMP_InputField loginMessage;
+    public TMP_InputField loginMessage; //используем inputfield т.к. в нем есть возможность копировать текст.
     public Toggle LoginShowPasswordToggle;
 
     [Header("Регистрация")]
@@ -27,7 +27,7 @@ public class AuthUI : MonoBehaviour
     public TMP_InputField regConfirmPassword;
     public Button registerButton;
     public Button backToLoginButton;
-    public TextMeshProUGUI regMessage;
+    public TMP_InputField regMessage;
     public Toggle RegistrationShowPasswordToggle;
 
     private DatabaseManager db;
@@ -106,13 +106,11 @@ public class AuthUI : MonoBehaviour
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
         { 
             loginMessage.text = "Заполните все поля!";
-            loginMessage.textComponent.color = Color.red;
             return;
         }
 
         loginButton.interactable = false;
         loginMessage.text = "Вход...";
-        loginMessage.textComponent.color = Color.yellow;
 
         var result = await db.Login(username, password);
 
@@ -121,13 +119,11 @@ public class AuthUI : MonoBehaviour
         if (result.success)
         {
             loginMessage.text = result.message;
-            loginMessage.textComponent.color = Color.green;
             ShowMainPanel();
         }
         else
         {
             loginMessage.text = result.message;
-            loginMessage.textComponent.color = Color.red;
         }
     }
 
@@ -151,27 +147,23 @@ public class AuthUI : MonoBehaviour
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirm))
         {
             regMessage.text = "Заполните все поля!";
-            regMessage.color = Color.red;
             return;
         }
 
         if (password != confirm)
         {
             regMessage.text = "Пароли не совпадают!";
-            regMessage.color = Color.red;
             return;
         }
 
         if (password.Length < 4)
         {
             regMessage.text = "Пароль минимум 4 символа!";
-            regMessage.color = Color.red;
             return;
         }
 
         registerButton.interactable = false;
         regMessage.text = "Регистрация...";
-        regMessage.color = Color.yellow;
 
         var result = await db.Register(username, email, password);
 
@@ -180,7 +172,6 @@ public class AuthUI : MonoBehaviour
         if (result.success)
         {
             regMessage.text = result.message;
-            regMessage.color = Color.green;
 
             regUsername.text = "";
             regEmail.text = "";
@@ -193,7 +184,6 @@ public class AuthUI : MonoBehaviour
         else
         {
             regMessage.text = result.message;
-            regMessage.color = Color.red;
         }
     }
 

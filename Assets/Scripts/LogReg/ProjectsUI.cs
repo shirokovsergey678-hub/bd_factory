@@ -12,16 +12,23 @@ public class ProjectsUI : MonoBehaviour
     public Button addProjectButton;
     public Button logoutButton;
     public TextMeshProUGUI welcomeText;
-    public TextMeshProUGUI emptyMessageText;
+    public TMP_InputField emptyMessageText;
 
     public GameObject createProjectPanel;
     public TMP_InputField projectNameInput;
     public TMP_InputField projectDescriptionInput;
     public Button confirmCreateButton;
     public Button cancelCreateButton;
-    public TextMeshProUGUI createProjectMessage;
+    public TMP_InputField createProjectMessage;
+
+    [Header("Фильтры")]
+    public TMP_InputField searchInput;
+    public TMP_Dropdown sortDropdown;
+    public Toggle showArchivedToggle;
+    public TMP_Dropdown userDropdown; // только для админа
 
     private DatabaseManager db;
+    private List<Project> allProjects = new List<Project>();
     private List<Project> projects = new List<Project>();
 
     void Awake()
@@ -43,6 +50,13 @@ public class ProjectsUI : MonoBehaviour
     {
         SubscribeButtons();
         createProjectPanel.SetActive(false);
+
+        searchInput.onValueChanged.AddListener(_ => ApplyFilters());
+        sortDropdown.onValueChanged.AddListener(_ => ApplyFilters());
+        showArchivedToggle.onValueChanged.AddListener(_ => ApplyFilters());
+
+        if (userDropdown != null)
+            userDropdown.onValueChanged.AddListener(_ => ApplyFilters());
     }
 
     void OnLoginSuccess()
@@ -71,7 +85,9 @@ public class ProjectsUI : MonoBehaviour
         ClearProjectsContainer();
         emptyMessageText.gameObject.SetActive(false);
 
-        projects = await db.GetProjectsAsync();
+        allProjects = await db.GetProjectsAsync();
+        SetupUserDropdown();
+        ApplyFilters();
 
         if (projects.Count == 0)
         {
@@ -84,6 +100,104 @@ public class ProjectsUI : MonoBehaviour
                 CreateProjectButton(project);
         }
     }
+    void ApplyFilters()
+    {
+        List<Project> filtered = new List<Project>(allProjects);
+
+        // 🔍 Поиск
+        if (!string.IsNullOrEmpty(searchInput.text))
+        {
+            string search = searchInput.text.ToLower();
+            filtered = filtered.FindAll(p => p.Name.ToLower().Contains(search));
+        }
+
+        // 📦 Архив
+        if (!showArchivedToggle.isOn)
+        {
+            filtered = filtered.FindAll(p => !p.IsArchived);
+        }
+
+        // 👤 Пользователь (только админ)
+        if (db.IsAdmin && userDropdown != null && userDropdown.value > 0)
+        {
+            int selectedUserId = int.Parse(userDropdown.options[userDropdown.value].text.Split(':')[0]);
+            filtered = filtered.FindAll(p => p.CreatedBy == selectedUserId);
+        }
+
+        switch (sortDropdown.value)
+        {
+            case 0://сначала новые
+                filtered.Sort((a, b) => b.CreatedAt.CompareTo(a.CreatedAt));
+                break;
+
+            case 1://сначала старые
+                filtered.Sort((a, b) => a.CreatedAt.CompareTo(b.CreatedAt));
+                break;
+
+            case 2://нащвание A-Z
+                filtered.Sort((a, b) => a.Name.CompareTo(b.Name));
+                break;
+
+            case 3://название Z-A
+                filtered.Sort((a, b) => b.Name.CompareTo(a.Name));
+                break;
+        }
+
+        // UI
+        ClearProjectsContainer();
+
+        if (filtered.Count == 0)
+        {
+            emptyMessageText.text = "Нет проектов";
+            emptyMessageText.gameObject.SetActive(true);
+        }
+        else
+        {
+            emptyMessageText.gameObject.SetActive(false);
+
+            foreach (var project in filtered)
+                CreateProjectButton(project);
+        }
+    }
+
+    void SetupUserDropdown()
+    {
+        if (userDropdown == null)
+            return;
+
+        if (!db.IsAdmin)
+        {
+            userDropdown.gameObject.SetActive(false);
+            return;
+        }
+
+        // ВАЖНО!
+        userDropdown.gameObject.SetActive(true);
+
+        userDropdown.ClearOptions();
+
+        List<string> options = new List<string>();
+        options.Add("Все");
+
+        HashSet<string> users = new HashSet<string>();
+
+        foreach (var p in allProjects)
+        {
+            users.Add($"{p.CreatedBy}:{p.Username}");
+        }
+
+        options.AddRange(users);
+
+        userDropdown.AddOptions(options);
+    }
+
+    async void UnarchiveProject(Project project)
+    {
+        var result = await DatabaseManager.Instance.UnarchiveProjectAsync(project.Id);
+
+        if (result.success)
+            LoadProjects();
+    }
 
     void CreateProjectButton(Project project)
     {
@@ -92,27 +206,23 @@ public class ProjectsUI : MonoBehaviour
 
         if (ui != null)
         {
-            ui.SetData(project);
+            ui.SetData(project, db.IsAdmin);
+
+            ui.OnArchive += ArchiveProject;
+            ui.OnUnarchive += UnarchiveProject;
 
             if (db.IsAdmin)
             {
-                ui.OnDelete += OnDeleteProject;
+                ui.OnDelete += DeleteProject;
             }
         }
+
     }
 
     void ClearProjectsContainer()
     {
         foreach (Transform child in projectsContainer)
             Destroy(child.gameObject);
-    }
-
-    async void OnDeleteProject(Project project)
-    {
-        var result = await db.ArchiveProjectAsync(project.Id);
-
-        if (result.success)
-            LoadProjects();
     }
 
     void SubscribeButtons()
@@ -147,8 +257,23 @@ public class ProjectsUI : MonoBehaviour
         else
         {
             createProjectMessage.text = result.message;
-            createProjectMessage.color = Color.red;
         }
+    }
+
+    async void ArchiveProject(Project project)
+    {
+        var result = await DatabaseManager.Instance.ArchiveProjectAsync(project.Id);
+
+        if (result.success)
+            LoadProjects();
+    }
+
+    async void DeleteProject(Project project)
+    {
+        var result = await DatabaseManager.Instance.DeleteProjectAsync(project.Id);
+
+        if (result.success)
+            LoadProjects();
     }
 
     public void OnLogout()

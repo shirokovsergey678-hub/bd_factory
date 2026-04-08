@@ -140,8 +140,15 @@ public class DatabaseManager : MonoBehaviour
 
         // для админа получаем все проекты, для юзера только свои проекты
         string query = IsAdmin
-            ? "SELECT Id, Name, Description, CreatedBy, CreatedAt, IsArchived FROM Projects WHERE IsArchived=0 ORDER BY CreatedAt DESC"
-            : "SELECT Id, Name, Description, CreatedBy, CreatedAt, IsArchived FROM Projects WHERE CreatedBy=@id AND IsArchived=0 ORDER BY CreatedAt DESC";
+            ? @"SELECT p.Id, p.Name, p.Description, p.CreatedBy, p.CreatedAt, p.IsArchived, u.Username
+                FROM Projects p
+                JOIN Users u ON p.CreatedBy = u.Id
+                ORDER BY p.CreatedAt DESC"
+            : @"SELECT p.Id, p.Name, p.Description, p.CreatedBy, p.CreatedAt, p.IsArchived, u.Username
+                FROM Projects p
+                JOIN Users u ON p.CreatedBy = u.Id
+                WHERE p.CreatedBy=@id
+                ORDER BY p.CreatedAt DESC";
 
 
         var cmd = new SqlCommand(query, conn);
@@ -164,11 +171,31 @@ public class DatabaseManager : MonoBehaviour
                 Description = reader.IsDBNull(2) ? "" : reader.GetString(2),
                 CreatedBy = reader.GetInt32(3),
                 CreatedAt = reader.GetDateTime(4),
-                IsArchived = reader.GetBoolean(5)
+                IsArchived = reader.GetBoolean(5),
+                Username = reader.GetString(6)
             });
         }
         //возвращаем проекты
         return projects;
+    }
+
+    public async Task<(bool success, string message)> UnarchiveProjectAsync(int id)
+    {
+        try
+        {
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync();
+
+            var cmd = new SqlCommand("UPDATE Projects SET IsArchived=0 WHERE Id=@id", conn);
+            cmd.Parameters.AddWithValue("@id", id);
+
+            int rows = await cmd.ExecuteNonQueryAsync();
+            return (rows > 0, rows > 0 ? "Восстановлено" : "Не найдено");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
     }
 
     //добавление проекта
@@ -189,6 +216,25 @@ public class DatabaseManager : MonoBehaviour
 
             await cmd.ExecuteNonQueryAsync();
             return (true, "Проект создан");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
+    public async Task<(bool success, string message)> DeleteProjectAsync(int id)
+    {
+        try
+        {
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync();
+
+            var cmd = new SqlCommand("DELETE FROM Projects WHERE Id=@id", conn);
+            cmd.Parameters.AddWithValue("@id", id);
+
+            int rows = await cmd.ExecuteNonQueryAsync();
+            return (rows > 0, rows > 0 ? "Удалено" : "Не найдено");
         }
         catch (Exception ex)
         {
