@@ -55,21 +55,21 @@ public class ProjectButtonUI : MonoBehaviour
                 ? "Нет описания"
                 : project.Description;
 
-        // 👤 Пользователь (только для админа)
+        // Пользователь (только для админа)
         if (userText != null)
         {
             if (isAdmin)
             {
                 userText.gameObject.SetActive(true);
                 userText.text = $"U: {project.Username}";
-                // 💡 если захочешь — потом можно подгружать Username
             }
             else
             {
                 userText.gameObject.SetActive(false);
             }
         }
-        //архивация/разархивация
+
+        // Архивация/разархивация
         if (archiveButton != null && unarchiveButton != null)
         {
             if (project.IsArchived)
@@ -83,7 +83,5 @@ public class ProjectButtonUI : MonoBehaviour
                 unarchiveButton.gameObject.SetActive(false);
             }
         }
-        Debug.Log($"archiveButton null? {archiveButton == null}");
-        Debug.Log($"unarchiveButton null? {unarchiveButton == null}");
     }
 }

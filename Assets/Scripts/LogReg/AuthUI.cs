@@ -74,7 +74,7 @@ public class AuthUI : MonoBehaviour
         loginPassword.ForceLabelUpdate();
     }
 
-    Color colorOK = new Color(255, 255, 255);
+    Color colorDEF = new Color(255, 255, 255);
     Color colorERR = new Color(255, 0, 0);
 
     void CheckInputFieldColor(TMP_InputField inputField)
@@ -83,16 +83,16 @@ public class AuthUI : MonoBehaviour
         {
             inputField.GetComponent<Image>().color = colorERR;
         }
-        else inputField.GetComponent<Image>().color = colorOK;
+        else inputField.GetComponent<Image>().color = colorDEF;
     }
     public void ResetColorInputField()
     {
-        loginUsername.GetComponent<Image>().color = colorOK;
-        loginPassword.GetComponent<Image>().color = colorOK;
-        regUsername.GetComponent<Image>().color = colorOK;
-        regEmail.GetComponent<Image>().color = colorOK;
-        regPassword.GetComponent<Image>().color = colorOK;
-        regConfirmPassword.GetComponent<Image>().color = colorOK;
+        loginUsername.GetComponent<Image>().color = colorDEF;
+        loginPassword.GetComponent<Image>().color = colorDEF;
+        regUsername.GetComponent<Image>().color = colorDEF;
+        regEmail.GetComponent<Image>().color = colorDEF;
+        regPassword.GetComponent<Image>().color = colorDEF;
+        regConfirmPassword.GetComponent<Image>().color = colorDEF;
     }
 
     async void OnLogin()
