@@ -74,25 +74,36 @@ public class AuthUI : MonoBehaviour
         loginPassword.ForceLabelUpdate();
     }
 
-    Color colorDEF = new Color(255, 255, 255);
-    Color colorERR = new Color(255, 0, 0);
+    Color colorNormal = new Color(0.3962264f, 0.3962264f, 0.3962264f, 1f);
+    Color colorImage = new Color(0.7f, 0.7f, 0.7f, 1f);
 
     void CheckInputFieldColor(TMP_InputField inputField)
     {
         if (string.IsNullOrEmpty(inputField.text))
         {
-            inputField.GetComponent<Image>().color = colorERR;
+            inputField.GetComponent<Image>().color = Color.red;
+
+            var colors = inputField.colors;
+            colors.normalColor = Color.white;
+            inputField.colors = colors;
         }
-        else inputField.GetComponent<Image>().color = colorDEF;
+        else
+        {
+            inputField.GetComponent<Image>().color = colorImage;
+
+            var colors = inputField.colors;
+            colors.normalColor = colorNormal;
+            inputField.colors = colors;
+        }
     }
     public void ResetColorInputField()
     {
-        loginUsername.GetComponent<Image>().color = colorDEF;
-        loginPassword.GetComponent<Image>().color = colorDEF;
-        regUsername.GetComponent<Image>().color = colorDEF;
-        regEmail.GetComponent<Image>().color = colorDEF;
-        regPassword.GetComponent<Image>().color = colorDEF;
-        regConfirmPassword.GetComponent<Image>().color = colorDEF;
+        loginUsername.GetComponent<Image>().color = colorImage;
+        loginPassword.GetComponent<Image>().color = colorImage;
+        regUsername.GetComponent<Image>().color = colorImage;
+        regEmail.GetComponent<Image>().color = colorImage;
+        regPassword.GetComponent<Image>().color = colorImage;
+        regConfirmPassword.GetComponent<Image>().color = colorImage;
     }
 
     async void OnLogin()

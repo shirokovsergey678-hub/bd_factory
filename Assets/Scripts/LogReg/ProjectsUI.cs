@@ -312,6 +312,7 @@ public class ProjectsUI : MonoBehaviour
         authUI.loginUsername.text = "";
         authUI.loginPassword.text = "";
         authUI.loginMessage.text = "";
+        authUI.regMessage.text = "";
         authUI.ResetColorInputField();
     }
 }
