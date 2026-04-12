@@ -14,8 +14,7 @@ public class ProjectsUI : MonoBehaviour
     [Header("Главные кнопки")]
     public Button addProjectButton;
     public Button logoutButton;
-    public TextMeshProUGUI welcomeText;
-    public TMP_InputField emptyMessageText;    
+    public TextMeshProUGUI welcomeText; 
     
     [Header("Фильтры")]
     public TMP_InputField searchInput;
@@ -29,7 +28,7 @@ public class ProjectsUI : MonoBehaviour
     public TMP_InputField projectDescriptionInput;
     public Button confirmCreateButton;
     public Button cancelCreateButton;
-    public TMP_InputField createProjectMessage;
+    public TextMeshProUGUI createProjectMessage;
 
     [Header("Удаление")]
     public GameObject deleteConfirmPanel;
@@ -86,7 +85,7 @@ public class ProjectsUI : MonoBehaviour
         }
 
         welcomeText.text =
-            $"Привет, {db.CurrentUser.Username}!" +
+            $"Привет, {db.CurrentUser.Username}! Роль: " +
             $"{(db.IsAdmin ? "Администратор" : "Пользователь")}";
 
         LoadProjects();
@@ -95,7 +94,6 @@ public class ProjectsUI : MonoBehaviour
     async void LoadProjects()
     {
         ClearProjectsContainer();
-        emptyMessageText.gameObject.SetActive(false);
 
         allProjects = await db.GetProjectsAsync();
 
@@ -161,15 +159,6 @@ public class ProjectsUI : MonoBehaviour
     void UpdateProjectsUI(List<Project> filtered)
     {
         ClearProjectsContainer();
-
-        if (filtered.Count == 0)
-        {
-            emptyMessageText.text = "Нет проектов";
-            emptyMessageText.gameObject.SetActive(true);
-            return;
-        }
-
-        emptyMessageText.gameObject.SetActive(false);
 
         foreach (var project in filtered)
             CreateProjectButton(project);
