@@ -97,6 +97,7 @@ public class ProjectsUI : MonoBehaviour
 
         allProjects = await db.GetProjectsAsync();
 
+        //обновляем дропдаун пользователей и добавляем имеющихся юзеров в него
         SetupUserDropdown();
         ApplyFilters();
     }

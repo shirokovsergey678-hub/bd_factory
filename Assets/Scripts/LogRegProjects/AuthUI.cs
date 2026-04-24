@@ -74,7 +74,7 @@ public class AuthUI : MonoBehaviour
         loginPassword.ForceLabelUpdate();
     }
 
-    Color colorNormal = new Color(0.3962264f, 0.3962264f, 0.3962264f, 1f);
+    Color colorNormal = new Color(0.39f, 0.39f, 0.39f, 1f);
     Color colorImage = new Color(0.7f, 0.7f, 0.7f, 1f);
 
     void CheckInputFieldColor(TMP_InputField inputField)

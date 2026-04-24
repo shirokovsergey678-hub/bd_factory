@@ -6,11 +6,8 @@ using System.Data.SqlClient;
 
 public class DatabaseManager : MonoBehaviour
 {
-    #region CONFIG
     private string connectionString = "Server=localhost;Database=factory;Integrated Security=True;";
-    #endregion
 
-    #region SINGLETON
     private static DatabaseManager instance;
     public static DatabaseManager Instance => instance;
 
@@ -23,17 +20,13 @@ public class DatabaseManager : MonoBehaviour
         }
         else Destroy(gameObject);
     }
-    #endregion
 
-    #region USER STATE
     public event Action OnLoginSuccess;
 
     public User CurrentUser { get; private set; }
 
     public bool IsAdmin => CurrentUser != null && CurrentUser.Role == "Admin";
-    #endregion
 
-    #region AUTH
     // Регистрация
     public async Task<(bool success, string message)> Register(string username, string email, string password)
     {
@@ -121,9 +114,7 @@ public class DatabaseManager : MonoBehaviour
     {
         CurrentUser = null;
     }
-    #endregion
 
-    #region PROJECTS
     // Получение проектов
     public async Task<List<Project>> GetProjectsAsync()
     {
@@ -151,6 +142,7 @@ public class DatabaseManager : MonoBehaviour
         if (!IsAdmin)
             cmd.Parameters.AddWithValue("@id", CurrentUser.Id);
 
+        //using для автоматического закрытия соединения
         using var reader = await cmd.ExecuteReaderAsync();
 
         while (await reader.ReadAsync())
@@ -252,5 +244,4 @@ public class DatabaseManager : MonoBehaviour
             return (false, ex.Message);
         }
     }
-    #endregion
 }
