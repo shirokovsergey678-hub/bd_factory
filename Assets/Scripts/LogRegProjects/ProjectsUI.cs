@@ -41,6 +41,13 @@ public class ProjectsUI : MonoBehaviour
     private List<Project> allProjects = new List<Project>();
     private Project projectToDelete;
 
+    [Header("Панели текущего проекта")]
+    [SerializeField] private GameObject projectsPanel;
+    [SerializeField] private GameObject projectPanel;
+
+    private Project currentProject;
+    [SerializeField] private HierarchyUI hierarchyUI;
+
     void Awake()
     {
         db = DatabaseManager.Instance;
@@ -200,9 +207,25 @@ public class ProjectsUI : MonoBehaviour
 
         ui.OnArchive += ArchiveProject;
         ui.OnUnarchive += UnarchiveProject;
+        ui.OnClick += OpenProject;
 
         if (db.IsAdmin)
             ui.OnDelete += ShowDeleteConfirm;
+    }
+
+    void OpenProject(Project project)
+    {
+        //projectsPanel.SetActive(false);
+        projectPanel.SetActive(true);
+
+        hierarchyUI.LoadHierarchy(project.Id);
+    }
+    public void BackToProjects()
+    {
+        projectPanel.SetActive(false);
+        projectsPanel.SetActive(true);
+
+        currentProject = null;
     }
 
     async void ArchiveProject(Project project)
@@ -305,4 +328,5 @@ public class ProjectsUI : MonoBehaviour
         authUI.regMessage.text = "";
         authUI.ResetColorInputField();
     }
+
 }

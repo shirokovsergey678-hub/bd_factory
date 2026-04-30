@@ -3,6 +3,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using Mono.Cecil;
 
 public class DatabaseManager : MonoBehaviour
 {
@@ -243,5 +244,64 @@ public class DatabaseManager : MonoBehaviour
         {
             return (false, ex.Message);
         }
+    }
+
+    //--------------Иерархия-----------------
+    //Получение узлов проекта
+    public async Task<List<ProjectNode>> GetNodesAsync(int ProjectId)
+    {
+        var list = new List<ProjectNode>();
+
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand("SELECT Id, ProjectId, ParentId, Name FROM ProjectNodes WHERE ProjectId=@id", conn);
+        cmd.Parameters.AddWithValue("@id", ProjectId);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            list.Add(new ProjectNode
+            {
+                Id = reader.GetInt32(0),
+                ProjectId = reader.GetInt32(1),
+                ParentId = reader.IsDBNull(2) ? null : reader.GetInt32(2),
+                Name = reader.GetString(3)
+                
+            });
+        }
+        return list;
+    }
+    //Создание узла в бд
+    public async Task<ProjectNode> CreateNodeAsync(int projectId, int? parentId, string name)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"INSERT INTO ProjectNodes (ProjectId, ParentId, Name) OUTPUT INSERTED.Id VALUES (@p, @parent, @name)", conn);
+        cmd.Parameters.AddWithValue("@p", projectId);
+        cmd.Parameters.AddWithValue("@parent", (object?)parentId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@name", name);
+
+        int id = (int)await cmd.ExecuteScalarAsync();
+
+        return new ProjectNode
+        {
+            Id = id,
+            ProjectId = projectId,
+            ParentId = parentId,
+            Name = name
+        };
+    }
+    //удаление узла проекта
+    public async Task DeleteNodeAsync(int id)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand("DELETE FROM ProjectNodes WHERE Id=@id", conn);
+        cmd.Parameters.AddWithValue("@id", id);
+
+        await cmd.ExecuteNonQueryAsync();
     }
 }
