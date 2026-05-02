@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using System;
+using UnityEngine.EventSystems;
 
 public class NodeUI : MonoBehaviour
 {
@@ -15,6 +16,7 @@ public class NodeUI : MonoBehaviour
 
     public event Action<ProjectNode> OnClick;
     public event Action<ProjectNode> OnToggle;
+    public event Action<ProjectNode, Vector2> OnRightClick;
 
     public void Setup(ProjectNode node, int level)
     {
@@ -28,11 +30,37 @@ public class NodeUI : MonoBehaviour
 
         arrowButton.onClick.RemoveAllListeners();
         arrowButton.onClick.AddListener(() => OnToggle?.Invoke(node));
+
+        SetupRightClick(mainButton.gameObject); // 👈 ВОТ КЛЮЧ
+    }
+
+    void SetupRightClick(GameObject target)
+    {
+        var trigger = target.GetComponent<EventTrigger>();
+        if (trigger == null)
+            trigger = target.AddComponent<EventTrigger>();
+
+        trigger.triggers.Clear();
+
+        var entry = new EventTrigger.Entry();
+        entry.eventID = EventTriggerType.PointerClick;
+
+        entry.callback.AddListener((data) =>
+        {
+            var ev = (PointerEventData)data;
+
+            if (ev.button == PointerEventData.InputButton.Right)
+            {
+                Debug.Log("ПКМ работает");
+                OnRightClick?.Invoke(node, Input.mousePosition);
+            }
+        });
+
+        trigger.triggers.Add(entry);
     }
 
     public void SetArrow(bool expanded, bool hasChildren)
     {
-        // если нет детей — просто делаем прозрачной
         if (!hasChildren)
         {
             arrow.color = new Color(1, 1, 1, 0);

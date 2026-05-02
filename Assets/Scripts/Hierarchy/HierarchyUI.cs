@@ -1,92 +1,91 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 public class HierarchyUI : MonoBehaviour
 {
-    [Header("UI")]
-    [SerializeField] private Transform content; // Content èç ScrollView
+    [SerializeField] private Transform content;
     [SerializeField] private GameObject nodePrefab;
+
+    [SerializeField] private ContextMenuUI contextMenu;
+    [SerializeField] private CreateNodePanel createPanel;
+    [SerializeField] private HierarchyBackgroundUI background;
 
     private DatabaseManager db;
 
-    private List<ProjectNode> tree = new();        // íàñòîÿùåå äåðåâî
-    private List<ProjectNode> visibleNodes = new(); // ÷òî ñåé÷àñ âèäíî
+    private List<ProjectNode> tree = new();
+    private List<ProjectNode> visibleNodes = new();
+
+    private int currentProjectId;
+
 
     void Awake()
     {
+        background.OnRightClickEmpty += OnEmptyRightClick;
         db = DatabaseManager.Instance;
     }
-
-    // âûçûâàåøü ïðè îòêðûòèè ïðîåêòà
+    void OnEmptyRightClick(Vector2 pos)
+    {
+        contextMenu.Show(
+            pos,
+            () => ShowCreate(null), // ðŸ‘ˆ Ñ‚ÐµÐ¿ÐµÑ€ÑŒ Ñ‡ÐµÑ€ÐµÐ· Ð¿Ð°Ð½ÐµÐ»ÑŒ
+            null
+        );
+    }
     public async void LoadHierarchy(int projectId)
     {
+        currentProjectId = projectId;
+
         Clear();
 
         var flat = await db.GetNodesAsync(projectId);
-
         tree = BuildTree(flat);
 
         BuildVisibleList();
         Draw();
     }
 
-    // --------------------------
-    // 1. ÑÒÐÎÈÌ ÄÅÐÅÂÎ
-    // --------------------------
     List<ProjectNode> BuildTree(List<ProjectNode> flat)
     {
         var lookup = new Dictionary<int, ProjectNode>();
         var roots = new List<ProjectNode>();
 
-        foreach (var node in flat)
+        foreach (var n in flat)
         {
-            node.Children = new List<ProjectNode>();
-            node.IsExpanded = false;
-            lookup[node.Id] = node;
+            n.Children = new List<ProjectNode>();
+            n.IsExpanded = false;
+            lookup[n.Id] = n;
         }
 
-        foreach (var node in flat)
+        foreach (var n in flat)
         {
-            if (node.ParentId.HasValue && lookup.ContainsKey(node.ParentId.Value))
-            {
-                lookup[node.ParentId.Value].Children.Add(node);
-            }
+            if (n.ParentId.HasValue && lookup.ContainsKey(n.ParentId.Value))
+                lookup[n.ParentId.Value].Children.Add(n);
             else
-            {
-                roots.Add(node);
-            }
+                roots.Add(n);
         }
 
         return roots;
     }
 
-    // --------------------------
-    // 2. ÑÒÐÎÈÌ ÂÈÄÈÌÛÉ ÑÏÈÑÎÊ
-    // --------------------------
     void BuildVisibleList()
     {
         visibleNodes.Clear();
 
         foreach (var root in tree)
-            AddNodeRecursive(root, 0);
+            AddRecursive(root, 0);
     }
 
-    void AddNodeRecursive(ProjectNode node, int level)
+    void AddRecursive(ProjectNode node, int level)
     {
         node.Level = level;
         visibleNodes.Add(node);
 
-        if (!node.IsExpanded)
-            return;
+        if (!node.IsExpanded) return;
 
-        foreach (var child in node.Children)
-            AddNodeRecursive(child, level + 1);
+        foreach (var c in node.Children)
+            AddRecursive(c, level + 1);
     }
 
-    // --------------------------
-    // 3. ÐÈÑÓÅÌ UI
-    // --------------------------
     void Draw()
     {
         Clear();
@@ -99,16 +98,13 @@ public class HierarchyUI : MonoBehaviour
             ui.Setup(node, node.Level);
             ui.SetArrow(node.IsExpanded, node.Children.Count > 0);
 
-            ui.OnClick += OnNodeSelected;
-            ui.OnToggle += OnNodeToggled;
+            ui.OnClick += n => Debug.Log($"Ð’Ñ‹Ð±Ñ€Ð°Ð½: {n.Name}");
+            ui.OnToggle += OnToggle;
+            ui.OnRightClick += OnRightClick;
         }
     }
-    void OnNodeSelected(ProjectNode node)
-    {
-        Debug.Log($"Âûáðàí: {node.Name}");
 
-    }
-    void OnNodeToggled(ProjectNode node)
+    void OnToggle(ProjectNode node)
     {
         node.IsExpanded = !node.IsExpanded;
 
@@ -116,24 +112,73 @@ public class HierarchyUI : MonoBehaviour
         Draw();
     }
 
-    // --------------------------
-    // 4. ÊËÈÊ
-    // --------------------------
-    void OnNodeClicked(ProjectNode node, NodeUI ui)
+    void OnRightClick(ProjectNode node, Vector2 pos)
     {
-        // ðàñêðûòèå / çàêðûòèå
-        if (node.Children.Count > 0)
+        contextMenu.Show(
+            pos,
+            () => ShowCreate(node),
+            () => DeleteNode(node)
+        );
+    }
+
+    void ShowCreate(ProjectNode parent)
+    {
+        contextMenu.Hide(); // ðŸ”¥ Ð’ÐÐ–ÐÐž
+
+        createPanel.Show(async (name) =>
         {
-            node.IsExpanded = !node.IsExpanded;
+            int? parentId = parent?.Id;
+
+            int newId = await db.CreateNodeAsync(currentProjectId, parentId, name);
+
+            var newNode = new ProjectNode
+            {
+                Id = newId,
+                Name = name,
+                ParentId = parentId,
+                Children = new List<ProjectNode>()
+            };
+
+            if (parent == null)
+                tree.Add(newNode);
+            else
+            {
+                parent.Children.Add(newNode);
+                parent.IsExpanded = true;
+            }
 
             BuildVisibleList();
             Draw();
-        }
-
-        Debug.Log($"Âûáðàí: {node.Name}");
+        });
     }
 
-    // --------------------------
+    async void DeleteNode(ProjectNode node)
+    {
+        await db.DeleteNodeAsync(node.Id);
+
+        RemoveNode(tree, node);
+
+        BuildVisibleList();
+        Draw();
+    }
+
+    bool RemoveNode(List<ProjectNode> list, ProjectNode target)
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i] == target)
+            {
+                list.RemoveAt(i);
+                return true;
+            }
+
+            if (RemoveNode(list[i].Children, target))
+                return true;
+        }
+
+        return false;
+    }
+
     void Clear()
     {
         foreach (Transform child in content)
