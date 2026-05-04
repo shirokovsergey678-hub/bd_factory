@@ -1,15 +1,17 @@
-using System.Collections.Generic;
-//Узел проекта
+п»їusing System.Collections.Generic;
+//РЈР·РµР» РїСЂРѕРµРєС‚Р°
 public class ProjectNode
 {
     public int Id;
-    public int ProjectId;
+    public int ProjectId; // рџ‘€ Р”РћР‘РђР’РР›Р
     public int? ParentId;
+
     public string Name;
+    public string Description;
+    public int Quantity;
 
     public List<ProjectNode> Children;
 
-    // UI состояние
     public bool IsExpanded;
     public int Level;
 }

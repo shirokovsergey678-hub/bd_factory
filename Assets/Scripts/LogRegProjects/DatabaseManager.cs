@@ -248,17 +248,22 @@ public class DatabaseManager : MonoBehaviour
 
     //--------------Иерархия-----------------
     //Получение узлов проекта
-    public async Task<List<ProjectNode>> GetNodesAsync(int ProjectId)
+    public async Task<List<ProjectNode>> GetNodesAsync(int projectId)
     {
         var list = new List<ProjectNode>();
 
         using var conn = new SqlConnection(connectionString);
         await conn.OpenAsync();
 
-        var cmd = new SqlCommand("SELECT Id, ProjectId, ParentId, Name FROM ProjectNodes WHERE ProjectId=@id", conn);
-        cmd.Parameters.AddWithValue("@id", ProjectId);
+        var cmd = new SqlCommand(@"
+        SELECT Id, ProjectId, ParentId, Name, Description, Quantity 
+        FROM ProjectNodes 
+        WHERE ProjectId=@id", conn);
+
+        cmd.Parameters.AddWithValue("@id", projectId);
 
         using var reader = await cmd.ExecuteReaderAsync();
+
         while (await reader.ReadAsync())
         {
             list.Add(new ProjectNode
@@ -266,10 +271,13 @@ public class DatabaseManager : MonoBehaviour
                 Id = reader.GetInt32(0),
                 ProjectId = reader.GetInt32(1),
                 ParentId = reader.IsDBNull(2) ? null : reader.GetInt32(2),
-                Name = reader.GetString(3)
-                
+                Name = reader.GetString(3),
+
+                Description = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                Quantity = reader.IsDBNull(5) ? 1 : reader.GetInt32(5)
             });
         }
+
         return list;
     }
     //Создание узла в бд
@@ -306,6 +314,25 @@ public class DatabaseManager : MonoBehaviour
         DELETE FROM ProjectNodes WHERE Id IN (SELECT Id FROM ToDelete)", conn);
 
         cmd.Parameters.AddWithValue("@id", nodeId);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+    public async Task UpdateNodeAsync(ProjectNode node)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+        UPDATE ProjectNodes
+        SET Name=@n,
+            Description=@d,
+            Quantity=@q
+        WHERE Id=@id", conn);
+
+        cmd.Parameters.AddWithValue("@n", node.Name);
+        cmd.Parameters.AddWithValue("@d", node.Description ?? "");
+        cmd.Parameters.AddWithValue("@q", node.Quantity);
+        cmd.Parameters.AddWithValue("@id", node.Id);
 
         await cmd.ExecuteNonQueryAsync();
     }

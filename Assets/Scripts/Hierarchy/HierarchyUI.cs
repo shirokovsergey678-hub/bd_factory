@@ -9,7 +9,7 @@ public class HierarchyUI : MonoBehaviour
     [SerializeField] private ContextMenuUI contextMenu;
     [SerializeField] private CreateNodePanel createPanel;
     [SerializeField] private HierarchyBackgroundUI background;
-
+    [SerializeField] private NodeDetailsUI nodeDetailsUI;
     private DatabaseManager db;
 
     private List<ProjectNode> tree = new();
@@ -98,12 +98,15 @@ public class HierarchyUI : MonoBehaviour
             ui.Setup(node, node.Level);
             ui.SetArrow(node.IsExpanded, node.Children.Count > 0);
 
-            ui.OnClick += n => Debug.Log($"Выбран: {n.Name}");
+            ui.OnClick += OnNodeSelected;
             ui.OnToggle += OnToggle;
             ui.OnRightClick += OnRightClick;
         }
     }
-
+    void OnNodeSelected(ProjectNode node)
+    {
+        nodeDetailsUI.Show(node);
+    }
     void OnToggle(ProjectNode node)
     {
         node.IsExpanded = !node.IsExpanded;
