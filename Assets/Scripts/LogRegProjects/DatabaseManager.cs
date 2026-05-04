@@ -336,4 +336,56 @@ public class DatabaseManager : MonoBehaviour
 
         await cmd.ExecuteNonQueryAsync();
     }
+    public async Task<List<NodeFile>> GetNodeFilesAsync(int nodeId)
+    {
+        var list = new List<NodeFile>();
+
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(
+            "SELECT Id, NodeId, FileName, FilePath FROM NodeFiles WHERE NodeId=@id", conn);
+
+        cmd.Parameters.AddWithValue("@id", nodeId);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            list.Add(new NodeFile
+            {
+                Id = reader.GetInt32(0),
+                NodeId = reader.GetInt32(1),
+                FileName = reader.GetString(2),
+                FilePath = reader.GetString(3)
+            });
+        }
+
+        return list;
+    }
+    public async Task AddNodeFileAsync(NodeFile file)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+        INSERT INTO NodeFiles (NodeId, FileName, FilePath)
+        VALUES (@n, @name, @path)", conn);
+
+        cmd.Parameters.AddWithValue("@n", file.NodeId);
+        cmd.Parameters.AddWithValue("@name", file.FileName);
+        cmd.Parameters.AddWithValue("@path", file.FilePath);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+    public async Task DeleteNodeFileAsync(int id)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand("DELETE FROM NodeFiles WHERE Id=@id", conn);
+        cmd.Parameters.AddWithValue("@id", id);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
 }
