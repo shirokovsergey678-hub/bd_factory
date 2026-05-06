@@ -35,9 +35,12 @@ public class HierarchyUI : MonoBehaviour
     {
         currentProjectId = projectId;
 
+        nodeDetailsUI.Hide();
+
         Clear();
 
-        var flat = await db.GetNodesAsync(projectId);
+        var flat = await db.GetNodesAsync(projectId); // ✅ теперь ок
+
         tree = BuildTree(flat);
 
         BuildVisibleList();

@@ -1,4 +1,4 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using SFB;
@@ -36,9 +36,21 @@ public class NodeDetailsUI : MonoBehaviour
 
         LoadFiles();
     }
+    public void Show(ProjectNode node)
+    {
+        currentNode = node; // ‚úÖ –°–ù–ê–ß–ê–õ–ê
+
+        panel.SetActive(true);
+
+        nameInput.text = node.Name;
+        descriptionInput.text = node.Description ?? "";
+        quantityInput.text = node.Quantity <= 0 ? "1" : node.Quantity.ToString();
+
+        LoadFiles(); // ‚úÖ –ü–û–°–õ–ï
+    }
     async void AddFile()
     {
-        var paths = StandaloneFileBrowser.OpenFilePanel("¬˚·ÂË Ù‡ÈÎ", "", "", false);
+        var paths = StandaloneFileBrowser.OpenFilePanel("–í—ã–±–µ—Ä–∏ —Ñ–∞–π–ª", "", "", false);
 
         if (paths.Length == 0) return;
 
@@ -57,6 +69,8 @@ public class NodeDetailsUI : MonoBehaviour
     }
     async void LoadFiles()
     {
+        if (currentNode == null) return; // üî•
+
         foreach (Transform c in filesContainer)
             Destroy(c.gameObject);
 
@@ -68,21 +82,8 @@ public class NodeDetailsUI : MonoBehaviour
             var ui = obj.GetComponent<FileItemUI>();
 
             ui.Setup(f);
-
             ui.OnDelete += DeleteFile;
         }
-    }
-
-    public void Show(ProjectNode node)
-    {
-        LoadFiles();
-        currentNode = node;
-
-        panel.SetActive(true);
-
-        nameInput.text = node.Name;
-        descriptionInput.text = node.Description ?? "";
-        quantityInput.text = node.Quantity <= 0 ? "1" : node.Quantity.ToString();
     }
 
     async void Save()
@@ -100,7 +101,7 @@ public class NodeDetailsUI : MonoBehaviour
 
         hierarchyUI.LoadHierarchy(currentNode.ProjectId);
 
-        Debug.Log("—Óı‡ÌÂÌÓ");
+        Debug.Log("–°–æ—Ö—Ä–∞–Ω–µ–Ω–æ");
     }
 
     public void Hide()

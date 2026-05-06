@@ -378,6 +378,7 @@ public class DatabaseManager : MonoBehaviour
 
         await cmd.ExecuteNonQueryAsync();
     }
+
     public async Task DeleteNodeFileAsync(int id)
     {
         using var conn = new SqlConnection(connectionString);
