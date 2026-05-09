@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using System;
-using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class ContextMenuUI : MonoBehaviour
 {
@@ -9,6 +8,7 @@ public class ContextMenuUI : MonoBehaviour
 
     private Action onCreate;
     private Action onDelete;
+    private Action onMakeChild;
 
     void Update()
     {
@@ -22,15 +22,18 @@ public class ContextMenuUI : MonoBehaviour
             if (!RectTransformUtility.RectangleContainsScreenPoint(
                 panel.GetComponent<RectTransform>(),
                 Input.mousePosition,
-                cam
-            ))
+                cam))
             {
                 Hide();
             }
         }
     }
 
-    public void Show(Vector2 screenPos, Action create, Action delete)
+    public void Show(
+        Vector2 screenPos,
+        Action create,
+        Action delete,
+        Action makeChild = null)
     {
         panel.SetActive(true);
 
@@ -49,19 +52,24 @@ public class ContextMenuUI : MonoBehaviour
 
         onCreate = create;
         onDelete = delete;
+        onMakeChild = makeChild;
     }
 
     public void OnCreateClicked()
     {
-        Debug.Log("CREATE CLICK");
         onCreate?.Invoke();
         Hide();
     }
 
     public void OnDeleteClicked()
     {
-        Debug.Log("DELETE CLICK");
         onDelete?.Invoke();
+        Hide();
+    }
+
+    public void OnMakeChildClicked()
+    {
+        onMakeChild?.Invoke();
         Hide();
     }
 

@@ -302,16 +302,68 @@ public class DatabaseManager : MonoBehaviour
     public async Task DeleteNodeAsync(int nodeId)
     {
         using var conn = new SqlConnection(connectionString);
+
         await conn.OpenAsync();
 
         var cmd = new SqlCommand(@"
-        WITH ToDelete AS (
-            SELECT Id FROM ProjectNodes WHERE Id=@id
-            UNION ALL
-            SELECT n.Id FROM ProjectNodes n
-            JOIN ToDelete td ON n.ParentId = td.Id
-        )
-        DELETE FROM ProjectNodes WHERE Id IN (SELECT Id FROM ToDelete)", conn);
+
+    -- собираем все ноды
+    WITH ToDelete AS
+    (
+        SELECT Id
+        FROM ProjectNodes
+        WHERE Id=@id
+
+        UNION ALL
+
+        SELECT n.Id
+        FROM ProjectNodes n
+        JOIN ToDelete td
+            ON n.ParentId = td.Id
+    )
+
+    -- сначала удаляем файлы
+    DELETE FROM NodeFiles
+    WHERE NodeId IN (SELECT Id FROM ToDelete);
+
+    -- потом ноды
+    WITH ToDelete2 AS
+    (
+        SELECT Id
+        FROM ProjectNodes
+        WHERE Id=@id
+
+        UNION ALL
+
+        SELECT n.Id
+        FROM ProjectNodes n
+        JOIN ToDelete2 td
+            ON n.ParentId = td.Id
+    )
+
+    DELETE FROM ProjectNodes
+    WHERE Id IN (SELECT Id FROM ToDelete2);
+
+    ", conn);
+
+        cmd.Parameters.AddWithValue("@id", nodeId);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+    public async Task UpdateNodeParentAsync(int nodeId, int? parentId)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+    UPDATE ProjectNodes
+    SET ParentId=@p
+    WHERE Id=@id", conn);
+
+        cmd.Parameters.AddWithValue(
+            "@p",
+            (object?)parentId ?? DBNull.Value
+        );
 
         cmd.Parameters.AddWithValue("@id", nodeId);
 
@@ -389,4 +441,20 @@ public class DatabaseManager : MonoBehaviour
 
         await cmd.ExecuteNonQueryAsync();
     }
+    public async Task SetParentAsync(int nodeId, int? parentId)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+    UPDATE ProjectNodes
+    SET ParentId=@p
+    WHERE Id=@id", conn);
+
+        cmd.Parameters.AddWithValue("@id", nodeId);
+        cmd.Parameters.AddWithValue("@p", (object?)parentId ?? DBNull.Value);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
 }

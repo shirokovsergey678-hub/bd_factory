@@ -8,7 +8,7 @@ public class HierarchyBackgroundUI : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button == PointerEventData.InputButton.Right)
+        if (eventData.button == PointerEventData.InputButton.Left)
         {
             Debug.Log("ПКМ по пустоте");
             OnRightClickEmpty?.Invoke(Input.mousePosition);
