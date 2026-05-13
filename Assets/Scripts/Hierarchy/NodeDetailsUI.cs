@@ -2,7 +2,9 @@
 using TMPro;
 using UnityEngine.UI;
 using SFB;
-
+using SFB;
+using System.IO;
+using System;
 public class NodeDetailsUI : MonoBehaviour
 {
     [SerializeField] private GameObject panel;
@@ -17,16 +19,108 @@ public class NodeDetailsUI : MonoBehaviour
     [SerializeField] private GameObject fileItemPrefab;
     [SerializeField] private Button addFileButton;
 
+    [SerializeField] private Transform schemesContainer;
+    [SerializeField] private GameObject schemeItemPrefab;
+    [SerializeField] private Button addSchemeButton;
+
     private ProjectNode currentNode;
     private DatabaseManager db;
 
     void Awake()
     {
         db = DatabaseManager.Instance;
-
+        addSchemeButton.onClick.AddListener(AddScheme);
         saveButton.onClick.AddListener(Save);
         addFileButton.onClick.AddListener(AddFile);
         panel.SetActive(false);
+    }
+    async void AddScheme()
+    {
+        if (currentNode == null)
+            return;
+
+        var extensions = new[]
+        {
+        new ExtensionFilter("Image Files", "png", "jpg", "jpeg")
+    };
+
+        var paths = StandaloneFileBrowser.OpenFilePanel(
+            "Выбери схему",
+            "",
+            extensions,
+            false
+        );
+
+        if (paths.Length == 0)
+            return;
+
+        string sourcePath = paths[0];
+
+        string folder = Path.Combine(Application.persistentDataPath, "Schemes");
+
+        if (!Directory.Exists(folder))
+            Directory.CreateDirectory(folder);
+
+        string fileName = Guid.NewGuid() + Path.GetExtension(sourcePath);
+
+        string destPath = Path.Combine(folder, fileName);
+
+        File.Copy(sourcePath, destPath, true);
+
+        currentNode.Schemes.Add(destPath);
+        await db.AddNodeSchemeAsync(currentNode.Id, destPath);
+        CreateSchemeUI(destPath);
+    }
+    void CreateSchemeUI(string path)
+    {
+        byte[] bytes = File.ReadAllBytes(path);
+
+        Texture2D tex = new Texture2D(2, 2);
+
+        tex.LoadImage(bytes);
+
+        Sprite sprite = Sprite.Create(
+            tex,
+            new Rect(0, 0, tex.width, tex.height),
+            new Vector2(0.5f, 0.5f)
+        );
+
+        var obj = Instantiate(schemeItemPrefab, schemesContainer);
+
+        var ui = obj.GetComponent<SchemeItemUI>();
+
+        ui.Setup(sprite, path);
+
+        ui.OnDelete += DeleteScheme;
+
+        // --------------------------
+        // СОХРАНЯЕМ ПРОПОРЦИИ
+        // --------------------------
+
+        float width = 800f;
+
+        float ratio = (float)tex.height / tex.width;
+
+        float height = width * ratio;
+
+        RectTransform rt = obj.GetComponent<RectTransform>();
+
+        rt.sizeDelta = new Vector2(width, height);
+    }
+    async void DeleteScheme(SchemeItemUI item)
+    {
+        currentNode.Schemes.Remove(item.FilePath);
+
+        if (File.Exists(item.FilePath))
+            File.Delete(item.FilePath);
+
+        Destroy(item.gameObject);
+        await db.DeleteNodeSchemeAsync(currentNode.Id, item.FilePath);
+    }
+    void ClearSchemes()
+    {
+        foreach (Transform child in schemesContainer)
+            Destroy(child.gameObject);
     }
     async void DeleteFile(NodeFile file)
     {
@@ -36,17 +130,24 @@ public class NodeDetailsUI : MonoBehaviour
 
         LoadFiles();
     }
-    public void Show(ProjectNode node)
+    public async void Show(ProjectNode node)
     {
-        currentNode = node; // ✅ СНАЧАЛА
+        currentNode = node;
+        currentNode.Schemes = await db.GetNodeSchemesAsync(node.Id);
+        ClearSchemes();
+
+        foreach (var path in node.Schemes)
+        {
+            if (File.Exists(path))
+                CreateSchemeUI(path);
+        }
 
         panel.SetActive(true);
 
         nameInput.text = node.Name;
         descriptionInput.text = node.Description ?? "";
-        quantityInput.text = node.Quantity <= 0 ? "1" : node.Quantity.ToString();
-
-        LoadFiles(); // ✅ ПОСЛЕ
+        quantityInput.text = node.Quantity.ToString();
+        LoadFiles();
     }
     async void AddFile()
     {

@@ -10,6 +10,7 @@ public class ProjectNode
     public string Description;
     public int Quantity;
 
+    public List<string> Schemes = new();
     public List<ProjectNode> Children;
 
     public bool IsExpanded;

@@ -456,5 +456,54 @@ public class DatabaseManager : MonoBehaviour
 
         await cmd.ExecuteNonQueryAsync();
     }
+    public async Task<List<string>> GetNodeSchemesAsync(int nodeId)
+    {
+        var list = new List<string>();
 
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(
+            "SELECT FilePath FROM NodeSchemes WHERE NodeId=@id",
+            conn);
+
+        cmd.Parameters.AddWithValue("@id", nodeId);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            list.Add(reader.GetString(0));
+        }
+
+        return list;
+    }
+    public async Task AddNodeSchemeAsync(int nodeId, string path)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(
+            "INSERT INTO NodeSchemes (NodeId, FilePath) VALUES (@n,@p)",
+            conn);
+
+        cmd.Parameters.AddWithValue("@n", nodeId);
+        cmd.Parameters.AddWithValue("@p", path);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+    public async Task DeleteNodeSchemeAsync(int nodeId, string path)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(
+            "DELETE FROM NodeSchemes WHERE NodeId=@n AND FilePath=@p",
+            conn);
+
+        cmd.Parameters.AddWithValue("@n", nodeId);
+        cmd.Parameters.AddWithValue("@p", path);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
 }
