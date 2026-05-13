@@ -106,6 +106,11 @@ public class NodeDetailsUI : MonoBehaviour
         RectTransform rt = obj.GetComponent<RectTransform>();
 
         rt.sizeDelta = new Vector2(width, height);
+
+        var le = obj.GetComponent<LayoutElement>();
+
+        le.preferredWidth = width;
+        le.preferredHeight = height;
     }
     async void DeleteScheme(SchemeItemUI item)
     {
