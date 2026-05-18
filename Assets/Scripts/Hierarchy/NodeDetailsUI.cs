@@ -89,7 +89,7 @@ public class NodeDetailsUI : MonoBehaviour
 
         var ui = obj.GetComponent<SchemeItemUI>();
 
-        ui.Setup(sprite, path);
+        ui.Setup(sprite, path, currentNode, hierarchyUI);
 
         ui.OnDelete += DeleteScheme;
 

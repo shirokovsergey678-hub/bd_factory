@@ -134,6 +134,11 @@ public class HierarchyUI : MonoBehaviour
                 node.Children.Count > 0
             );
 
+            ui.SetSelected(
+                selectedNode != null &&
+                selectedNode.Id == node.Id
+            );
+
             ui.OnClick += OnNodeSelected;
             ui.OnToggle += OnToggle;
             ui.OnRightClick += OnRightClick;
@@ -192,8 +197,58 @@ public class HierarchyUI : MonoBehaviour
         selectedNode = node;
 
         nodeDetailsUI.Show(node);
+        Draw();
 
         Debug.Log($"Выбрано: {node.Name}");
+    }
+
+    public bool OpenNode(int nodeId)
+    {
+        ProjectNode node = FindNode(tree, nodeId);
+
+        if (node == null)
+            return false;
+
+        selectedNode = node;
+        ExpandParents(tree, nodeId);
+        BuildVisibleList();
+        Draw();
+        nodeDetailsUI.Show(node);
+
+        return true;
+    }
+
+    ProjectNode FindNode(List<ProjectNode> nodes, int nodeId)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.Id == nodeId)
+                return node;
+
+            ProjectNode found = FindNode(node.Children, nodeId);
+
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+
+    bool ExpandParents(List<ProjectNode> nodes, int nodeId)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.Id == nodeId)
+                return true;
+
+            if (ExpandParents(node.Children, nodeId))
+            {
+                node.IsExpanded = true;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // =====================================================

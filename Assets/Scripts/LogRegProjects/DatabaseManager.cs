@@ -505,5 +505,118 @@ public class DatabaseManager : MonoBehaviour
         cmd.Parameters.AddWithValue("@p", path);
 
         await cmd.ExecuteNonQueryAsync();
+
+        await DeleteSchemeMarkersAsync(path);
+    }
+
+    public async Task<List<SchemeMarker>> GetSchemeMarkersAsync(string schemePath)
+    {
+        var list = new List<SchemeMarker>();
+
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+        var cmd = new SqlCommand(@"
+        SELECT m.Id, m.SchemePath, m.TargetNodeId, n.Name,
+               m.ButtonX, m.ButtonY, m.TargetX, m.TargetY
+        FROM SchemeMarkers m
+        LEFT JOIN ProjectNodes n ON n.Id = m.TargetNodeId
+        WHERE m.SchemePath=@path
+        ORDER BY m.Id", conn);
+
+        cmd.Parameters.AddWithValue("@path", schemePath);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            list.Add(new SchemeMarker
+            {
+                Id = reader.GetInt32(0),
+                SchemePath = reader.GetString(1),
+                TargetNodeId = reader.GetInt32(2),
+                TargetNodeName = reader.IsDBNull(3) ? "Удаленный узел" : reader.GetString(3),
+                ButtonX = Convert.ToSingle(reader.GetDouble(4)),
+                ButtonY = Convert.ToSingle(reader.GetDouble(5)),
+                TargetX = Convert.ToSingle(reader.GetDouble(6)),
+                TargetY = Convert.ToSingle(reader.GetDouble(7))
+            });
+        }
+
+        return list;
+    }
+
+    public async Task<int> SaveSchemeMarkerAsync(SchemeMarker marker)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        if (marker.Id > 0)
+        {
+            var updateCmd = new SqlCommand(@"
+            UPDATE SchemeMarkers
+            SET SchemePath=@scheme,
+                TargetNodeId=@node,
+                ButtonX=@buttonX,
+                ButtonY=@buttonY,
+                TargetX=@targetX,
+                TargetY=@targetY
+            WHERE Id=@id", conn);
+
+            FillSchemeMarkerParams(updateCmd, marker);
+            updateCmd.Parameters.AddWithValue("@id", marker.Id);
+
+            await updateCmd.ExecuteNonQueryAsync();
+            return marker.Id;
+        }
+
+        var insertCmd = new SqlCommand(@"
+        INSERT INTO SchemeMarkers
+            (SchemePath, TargetNodeId, ButtonX, ButtonY, TargetX, TargetY)
+        OUTPUT INSERTED.Id
+        VALUES
+            (@scheme, @node, @buttonX, @buttonY, @targetX, @targetY)", conn);
+
+        FillSchemeMarkerParams(insertCmd, marker);
+
+        marker.Id = (int)await insertCmd.ExecuteScalarAsync();
+        return marker.Id;
+    }
+
+    void FillSchemeMarkerParams(SqlCommand cmd, SchemeMarker marker)
+    {
+        cmd.Parameters.AddWithValue("@scheme", marker.SchemePath);
+        cmd.Parameters.AddWithValue("@node", marker.TargetNodeId);
+        cmd.Parameters.AddWithValue("@buttonX", marker.ButtonX);
+        cmd.Parameters.AddWithValue("@buttonY", marker.ButtonY);
+        cmd.Parameters.AddWithValue("@targetX", marker.TargetX);
+        cmd.Parameters.AddWithValue("@targetY", marker.TargetY);
+    }
+
+    public async Task DeleteSchemeMarkersAsync(string schemePath)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(
+            "DELETE FROM SchemeMarkers WHERE SchemePath=@path",
+            conn);
+
+        cmd.Parameters.AddWithValue("@path", schemePath);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task DeleteSchemeMarkerAsync(int markerId)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(
+            "DELETE FROM SchemeMarkers WHERE Id=@id",
+            conn);
+
+        cmd.Parameters.AddWithValue("@id", markerId);
+
+        await cmd.ExecuteNonQueryAsync();
     }
 }
