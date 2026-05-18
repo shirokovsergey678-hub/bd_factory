@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 public class HierarchyUI : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class HierarchyUI : MonoBehaviour
     private List<ProjectNode> visibleNodes = new();
 
     private int currentProjectId;
+    private int loadVersion;
 
     // -----------------------------
     // ВЫБРАННАЯ НОДА
@@ -46,11 +48,19 @@ public class HierarchyUI : MonoBehaviour
 
     public async void LoadHierarchy(int projectId)
     {
+        int version = ++loadVersion;
+
         currentProjectId = projectId;
+        selectedNode = null;
+        waitingForParent = false;
 
         Clear();
+        nodeDetailsUI.Hide();
 
         var flat = await db.GetNodesAsync(projectId);
+
+        if (version != loadVersion)
+            return;
 
         tree = BuildTree(flat);
 
@@ -134,15 +144,16 @@ public class HierarchyUI : MonoBehaviour
                 node.Children.Count > 0
             );
 
-            ui.SetSelected(
-                selectedNode != null &&
-                selectedNode.Id == node.Id
-            );
-
             ui.OnClick += OnNodeSelected;
             ui.OnToggle += OnToggle;
             ui.OnRightClick += OnRightClick;
         }
+    }
+
+    public void RefreshVisible()
+    {
+        BuildVisibleList();
+        Draw();
     }
 
     // =====================================================
@@ -197,7 +208,6 @@ public class HierarchyUI : MonoBehaviour
         selectedNode = node;
 
         nodeDetailsUI.Show(node);
-        Draw();
 
         Debug.Log($"Выбрано: {node.Name}");
     }

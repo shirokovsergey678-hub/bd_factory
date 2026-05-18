@@ -11,10 +11,6 @@ public class NodeUI : MonoBehaviour
     [SerializeField] private TMP_Text label;
     [SerializeField] private Image arrow;
     [SerializeField] private LayoutElement indent;
-    [SerializeField] private Image background;
-
-    private readonly Color normalColor = Color.white;
-    private readonly Color selectedColor = new Color(0.25f, 0.55f, 1f, 0.35f);
 
     private ProjectNode node;
 
@@ -36,19 +32,6 @@ public class NodeUI : MonoBehaviour
         arrowButton.onClick.AddListener(() => OnToggle?.Invoke(node));
 
         SetupRightClick(mainButton.gameObject); // 👈 ВОТ КЛЮЧ
-    }
-
-    public void SetSelected(bool selected)
-    {
-        Image targetBackground = background;
-
-        if (targetBackground == null && mainButton != null)
-            targetBackground = mainButton.GetComponent<Image>();
-
-        if (targetBackground == null)
-            return;
-
-        targetBackground.color = selected ? selectedColor : normalColor;
     }
 
     void SetupRightClick(GameObject target)

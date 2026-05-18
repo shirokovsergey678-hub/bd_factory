@@ -20,15 +20,26 @@ public class NodeDetailsUI : MonoBehaviour
     [SerializeField] private Button addFileButton;
 
     [SerializeField] private Transform schemesContainer;
+    [SerializeField] private GameObject schemesScrollView;
     [SerializeField] private GameObject schemeItemPrefab;
     [SerializeField] private Button addSchemeButton;
 
     private ProjectNode currentNode;
     private DatabaseManager db;
+    private int showVersion;
 
     void Awake()
     {
         db = DatabaseManager.Instance;
+
+        if (schemesScrollView == null && schemesContainer != null)
+        {
+            var scrollRect = schemesContainer.GetComponentInParent<ScrollRect>(true);
+
+            if (scrollRect != null)
+                schemesScrollView = scrollRect.gameObject;
+        }
+
         addSchemeButton.onClick.AddListener(AddScheme);
         saveButton.onClick.AddListener(Save);
         addFileButton.onClick.AddListener(AddFile);
@@ -70,9 +81,12 @@ public class NodeDetailsUI : MonoBehaviour
         currentNode.Schemes.Add(destPath);
         await db.AddNodeSchemeAsync(currentNode.Id, destPath);
         CreateSchemeUI(destPath);
+        UpdateSchemesScrollVisibility();
     }
     void CreateSchemeUI(string path)
     {
+        SetSchemesScrollVisible(true);
+
         byte[] bytes = File.ReadAllBytes(path);
 
         Texture2D tex = new Texture2D(2, 2);
@@ -121,11 +135,28 @@ public class NodeDetailsUI : MonoBehaviour
 
         Destroy(item.gameObject);
         await db.DeleteNodeSchemeAsync(currentNode.Id, item.FilePath);
+        UpdateSchemesScrollVisibility();
     }
     void ClearSchemes()
     {
         foreach (Transform child in schemesContainer)
             Destroy(child.gameObject);
+
+        SetSchemesScrollVisible(false);
+    }
+    void UpdateSchemesScrollVisibility()
+    {
+        bool hasSchemes =
+            currentNode != null &&
+            currentNode.Schemes != null &&
+            currentNode.Schemes.Count > 0;
+
+        SetSchemesScrollVisible(hasSchemes);
+    }
+    void SetSchemesScrollVisible(bool visible)
+    {
+        if (schemesScrollView != null)
+            schemesScrollView.SetActive(visible);
     }
     async void DeleteFile(NodeFile file)
     {
@@ -133,13 +164,21 @@ public class NodeDetailsUI : MonoBehaviour
 
         await db.DeleteNodeFileAsync(file.Id);
 
-        LoadFiles();
+        LoadFiles(showVersion);
     }
     public async void Show(ProjectNode node)
     {
+        int version = ++showVersion;
+
         currentNode = node;
-        currentNode.Schemes = await db.GetNodeSchemesAsync(node.Id);
         ClearSchemes();
+
+        var schemes = await db.GetNodeSchemesAsync(node.Id);
+
+        if (version != showVersion || currentNode != node)
+            return;
+
+        currentNode.Schemes = schemes;
 
         foreach (var path in node.Schemes)
         {
@@ -152,7 +191,7 @@ public class NodeDetailsUI : MonoBehaviour
         nameInput.text = node.Name;
         descriptionInput.text = node.Description ?? "";
         quantityInput.text = node.Quantity.ToString();
-        LoadFiles();
+        LoadFiles(version);
     }
     async void AddFile()
     {
@@ -171,9 +210,9 @@ public class NodeDetailsUI : MonoBehaviour
 
         await db.AddNodeFileAsync(file);
 
-        LoadFiles();
+        LoadFiles(showVersion);
     }
-    async void LoadFiles()
+    async void LoadFiles(int version)
     {
         if (currentNode == null) return; // 🔥
 
@@ -181,6 +220,9 @@ public class NodeDetailsUI : MonoBehaviour
             Destroy(c.gameObject);
 
         var files = await db.GetNodeFilesAsync(currentNode.Id);
+
+        if (version != showVersion || currentNode == null)
+            return;
 
         foreach (var f in files)
         {
@@ -205,14 +247,19 @@ public class NodeDetailsUI : MonoBehaviour
 
         await db.UpdateNodeAsync(currentNode);
 
-        hierarchyUI.LoadHierarchy(currentNode.ProjectId);
+        hierarchyUI.RefreshVisible();
 
         Debug.Log("Сохранено");
     }
 
     public void Hide()
     {
+        showVersion++;
         panel.SetActive(false);
         currentNode = null;
+        ClearSchemes();
+
+        foreach (Transform c in filesContainer)
+            Destroy(c.gameObject);
     }
 }

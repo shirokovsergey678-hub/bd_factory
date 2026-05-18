@@ -44,6 +44,7 @@ public class ProjectsUI : MonoBehaviour
     [Header("Панели текущего проекта")]
     [SerializeField] private GameObject projectsPanel;
     [SerializeField] private GameObject projectPanel;
+    [SerializeField] private TextMeshProUGUI currentProjectText;
 
     private Project currentProject;
     [SerializeField] private HierarchyUI hierarchyUI;
@@ -54,6 +55,12 @@ public class ProjectsUI : MonoBehaviour
 
         if (db != null)
             db.OnLoginSuccess += OnLoginSuccess;
+
+        if (currentProjectText == null)
+        {
+
+                currentProjectText = GetComponent<TextMeshProUGUI>();
+        }
     }
 
     void OnDestroy()
@@ -215,8 +222,13 @@ public class ProjectsUI : MonoBehaviour
 
     void OpenProject(Project project)
     {
-        //projectsPanel.SetActive(false);
+        currentProject = project;
+
+        projectsPanel.SetActive(false);
         projectPanel.SetActive(true);
+
+        if (currentProjectText != null)
+            currentProjectText.text = $"Вы открыли проект: {project.Name}";
 
         hierarchyUI.LoadHierarchy(project.Id);
     }
@@ -226,6 +238,9 @@ public class ProjectsUI : MonoBehaviour
         projectsPanel.SetActive(true);
 
         currentProject = null;
+
+        if (currentProjectText != null)
+            currentProjectText.text = "";
     }
 
     async void ArchiveProject(Project project)
