@@ -31,18 +31,12 @@ public class SchemeItemUI : MonoBehaviour, IPointerClickHandler
 
         if (markerLayer == null)
         {
-            Transform layer = transform.Find("MarkerLayer");
-
-            if (layer != null)
-                markerLayer = layer.GetComponent<RectTransform>();
+             markerLayer = GetComponent<RectTransform>();
         }
 
         if (markerNodeDropdown == null)
         {
-            Transform dropdown = transform.Find("MarkerNodeDropdown");
-
-            if (dropdown != null)
-                markerNodeDropdown = dropdown.GetComponent<TMP_Dropdown>();
+             markerNodeDropdown = GetComponent<TMP_Dropdown>();
         }
     }
 
@@ -83,11 +77,11 @@ public class SchemeItemUI : MonoBehaviour, IPointerClickHandler
             return;
 
         markerNodeDropdown.ClearOptions();
-        
+
         if (markerTargets.Count == 0)
         {
             markerNodeDropdown.interactable = false;
-            markerNodeDropdown.AddOptions(new List<string> { "All child nodes added" });
+            markerNodeDropdown.AddOptions(new List<string> { "Все дочерние узы добавлены" });
             return;
         }
 
@@ -134,16 +128,10 @@ public class SchemeItemUI : MonoBehaviour, IPointerClickHandler
         ProjectNode targetNode = GetSelectedMarkerTarget();
 
         if (targetNode == null)
-        {
-            Debug.Log("Selected node has no child nodes for marker");
             return;
-        }
 
         if (HasMarkerForNode(targetNode.Id))
-        {
-            Debug.Log("Marker for this node already exists on this scheme");
             return;
-        }
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             markerLayer,

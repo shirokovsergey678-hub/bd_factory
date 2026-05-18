@@ -1,50 +1,30 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using TMPro;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class HierarchyUI : MonoBehaviour
 {
     [Header("UI")]
     [SerializeField] private Transform content;
     [SerializeField] private GameObject nodePrefab;
-
     [SerializeField] private ContextMenuUI contextMenu;
     [SerializeField] private CreateNodePanel createPanel;
     [SerializeField] private HierarchyBackgroundUI background;
     [SerializeField] private NodeDetailsUI nodeDetailsUI;
 
     private DatabaseManager db;
-
-    private List<ProjectNode> tree = new();
-    private List<ProjectNode> visibleNodes = new();
+    private readonly List<ProjectNode> tree = new();
+    private readonly List<ProjectNode> visibleNodes = new();
 
     private int currentProjectId;
     private int loadVersion;
-
-    // -----------------------------
-    // ВЫБРАННАЯ НОДА
-    // -----------------------------
     private ProjectNode selectedNode;
-
-    // -----------------------------
-    // РЕЖИМ ПЕРЕНОСА
-    // -----------------------------
-    private bool waitingForParent = false;
-
-    // =====================================================
-    // INIT
-    // =====================================================
+    private bool waitingForParent;
 
     void Awake()
     {
         db = DatabaseManager.Instance;
-
         background.OnRightClickEmpty += OnEmptyRightClick;
     }
-
-    // =====================================================
-    // LOAD
-    // =====================================================
 
     public async void LoadHierarchy(int projectId)
     {
@@ -62,15 +42,12 @@ public class HierarchyUI : MonoBehaviour
         if (version != loadVersion)
             return;
 
-        tree = BuildTree(flat);
+        tree.Clear();
+        tree.AddRange(BuildTree(flat));
 
         BuildVisibleList();
         Draw();
     }
-
-    // =====================================================
-    // TREE
-    // =====================================================
 
     List<ProjectNode> BuildTree(List<ProjectNode> flat)
     {
@@ -81,22 +58,15 @@ public class HierarchyUI : MonoBehaviour
         {
             node.Children = new List<ProjectNode>();
             node.IsExpanded = false;
-
             lookup[node.Id] = node;
         }
 
         foreach (var node in flat)
         {
-            if (node.ParentId.HasValue &&
-                lookup.ContainsKey(node.ParentId.Value))
-            {
-                lookup[node.ParentId.Value]
-                    .Children.Add(node);
-            }
+            if (node.ParentId.HasValue && lookup.ContainsKey(node.ParentId.Value))
+                lookup[node.ParentId.Value].Children.Add(node);
             else
-            {
                 roots.Add(node);
-            }
         }
 
         return roots;
@@ -113,7 +83,6 @@ public class HierarchyUI : MonoBehaviour
     void AddRecursive(ProjectNode node, int level)
     {
         node.Level = level;
-
         visibleNodes.Add(node);
 
         if (!node.IsExpanded)
@@ -123,10 +92,6 @@ public class HierarchyUI : MonoBehaviour
             AddRecursive(child, level + 1);
     }
 
-    // =====================================================
-    // DRAW
-    // =====================================================
-
     void Draw()
     {
         Clear();
@@ -134,15 +99,10 @@ public class HierarchyUI : MonoBehaviour
         foreach (var node in visibleNodes)
         {
             var obj = Instantiate(nodePrefab, content);
-
             var ui = obj.GetComponent<NodeUI>();
 
             ui.Setup(node, node.Level);
-
-            ui.SetArrow(
-                node.IsExpanded,
-                node.Children.Count > 0
-            );
+            ui.SetArrow(node.IsExpanded, node.Children.Count > 0);
 
             ui.OnClick += OnNodeSelected;
             ui.OnToggle += OnToggle;
@@ -156,60 +116,23 @@ public class HierarchyUI : MonoBehaviour
         Draw();
     }
 
-    // =====================================================
-    // SELECT
-    // =====================================================
-
     async void OnNodeSelected(ProjectNode node)
     {
-        // -------------------------------------------------
-        // РЕЖИМ ПЕРЕНОСА
-        // -------------------------------------------------
         if (waitingForParent)
         {
             waitingForParent = false;
 
-            if (selectedNode == null)
+            if (selectedNode == null || selectedNode.Id == node.Id || IsChildOf(selectedNode, node))
                 return;
-
-            // нельзя в самого себя
-            if (selectedNode.Id == node.Id)
-            {
-                Debug.Log("Нельзя вложить объект в самого себя");
-                return;
-            }
-
-            // нельзя в потомка
-            if (IsChildOf(selectedNode, node))
-            {
-                Debug.Log("Нельзя вложить родителя в потомка");
-                return;
-            }
 
             selectedNode.ParentId = node.Id;
-
-            await db.UpdateNodeParentAsync(
-                selectedNode.Id,
-                node.Id
-            );
-
+            await db.UpdateNodeParentAsync(selectedNode.Id, node.Id);
             LoadHierarchy(currentProjectId);
-
-            Debug.Log(
-                $"{selectedNode.Name} теперь внутри {node.Name}"
-            );
-
             return;
         }
 
-        // -------------------------------------------------
-        // ОБЫЧНЫЙ ВЫБОР
-        // -------------------------------------------------
         selectedNode = node;
-
         nodeDetailsUI.Show(node);
-
-        Debug.Log($"Выбрано: {node.Name}");
     }
 
     public bool OpenNode(int nodeId)
@@ -261,77 +184,39 @@ public class HierarchyUI : MonoBehaviour
         return false;
     }
 
-    // =====================================================
-    // CHECK CHILD
-    // =====================================================
-
     bool IsChildOf(ProjectNode parent, ProjectNode possibleChild)
     {
         foreach (var child in parent.Children)
         {
-            if (child.Id == possibleChild.Id)
-                return true;
-
-            if (IsChildOf(child, possibleChild))
+            if (child.Id == possibleChild.Id || IsChildOf(child, possibleChild))
                 return true;
         }
 
         return false;
     }
 
-    // =====================================================
-    // TOGGLE
-    // =====================================================
-
     void OnToggle(ProjectNode node)
     {
         node.IsExpanded = !node.IsExpanded;
-
         BuildVisibleList();
         Draw();
     }
 
-    // =====================================================
-    // RIGHT CLICK NODE
-    // =====================================================
-
     void OnRightClick(ProjectNode node, Vector2 pos)
     {
-        // 🔥 ПКМ сразу выбирает объект
         selectedNode = node;
-
         nodeDetailsUI.Show(node);
 
         contextMenu.Show(
             pos,
-
-            // СОЗДАТЬ
             () => ShowCreate(node),
-
-            // УДАЛИТЬ
             () => DeleteNode(node),
-
-            // СДЕЛАТЬ ДОЧЕРНИМ
-            () =>
-            {
-                waitingForParent = true;
-
-                Debug.Log(
-                    $"Выбери нового родителя для {selectedNode.Name}"
-                );
-            }
+            () => waitingForParent = true
         );
     }
 
-    // =====================================================
-    // RIGHT CLICK EMPTY
-    // =====================================================
-
     async void OnEmptyRightClick(Vector2 pos)
     {
-        // -------------------------------------------------
-        // РЕЖИМ ПЕРЕНОСА
-        // -------------------------------------------------
         if (waitingForParent)
         {
             waitingForParent = false;
@@ -339,36 +224,15 @@ public class HierarchyUI : MonoBehaviour
             if (selectedNode != null)
             {
                 selectedNode.ParentId = null;
-
-                await db.UpdateNodeParentAsync(
-                    selectedNode.Id,
-                    null
-                );
-
+                await db.UpdateNodeParentAsync(selectedNode.Id, null);
                 LoadHierarchy(currentProjectId);
-
-                Debug.Log(
-                    $"{selectedNode.Name} теперь корневой объект"
-                );
             }
 
             return;
         }
 
-        // -------------------------------------------------
-        // ОБЫЧНОЕ МЕНЮ
-        // -------------------------------------------------
-        contextMenu.Show(
-            pos,
-            () => ShowCreate(null),
-            null,
-            null
-        );
+        contextMenu.Show(pos, () => ShowCreate(null), null, null);
     }
-
-    // =====================================================
-    // CREATE
-    // =====================================================
 
     void ShowCreate(ProjectNode parent)
     {
@@ -377,12 +241,7 @@ public class HierarchyUI : MonoBehaviour
         createPanel.Show(async (name) =>
         {
             int? parentId = parent?.Id;
-
-            int newId = await db.CreateNodeAsync(
-                currentProjectId,
-                parentId,
-                name
-            );
+            int newId = await db.CreateNodeAsync(currentProjectId, parentId, name);
 
             var newNode = new ProjectNode
             {
@@ -402,7 +261,6 @@ public class HierarchyUI : MonoBehaviour
             else
             {
                 parent.Children.Add(newNode);
-
                 parent.IsExpanded = true;
             }
 
@@ -411,20 +269,12 @@ public class HierarchyUI : MonoBehaviour
         });
     }
 
-    // =====================================================
-    // DELETE
-    // =====================================================
-
     async void DeleteNode(ProjectNode node)
     {
         await db.DeleteNodeAsync(node.Id);
-
         RemoveNode(tree, node);
-
         BuildVisibleList();
         Draw();
-
-        Debug.Log($"Удалено: {node.Name}");
     }
 
     bool RemoveNode(List<ProjectNode> list, ProjectNode target)
@@ -443,10 +293,6 @@ public class HierarchyUI : MonoBehaviour
 
         return false;
     }
-
-    // =====================================================
-    // CLEAR
-    // =====================================================
 
     void Clear()
     {

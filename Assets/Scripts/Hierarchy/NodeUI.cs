@@ -31,7 +31,7 @@ public class NodeUI : MonoBehaviour
         arrowButton.onClick.RemoveAllListeners();
         arrowButton.onClick.AddListener(() => OnToggle?.Invoke(node));
 
-        SetupRightClick(mainButton.gameObject); // 👈 ВОТ КЛЮЧ
+        SetupRightClick(mainButton.gameObject);
     }
 
     void SetupRightClick(GameObject target)
@@ -51,7 +51,6 @@ public class NodeUI : MonoBehaviour
 
             if (ev.button == PointerEventData.InputButton.Right)
             {
-                Debug.Log("ПКМ работает");
                 OnRightClick?.Invoke(node, Input.mousePosition);
             }
         });

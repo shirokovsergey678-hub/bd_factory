@@ -4,7 +4,6 @@ using TMPro;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-// Основная форма с проектами
 public class ProjectsUI : MonoBehaviour
 {
     [Header("Контейнер проектов")]
@@ -14,13 +13,13 @@ public class ProjectsUI : MonoBehaviour
     [Header("Главные кнопки")]
     public Button addProjectButton;
     public Button logoutButton;
-    public TextMeshProUGUI welcomeText; 
-    
+    public TextMeshProUGUI welcomeText;
+
     [Header("Фильтры")]
     public TMP_InputField searchInput;
     public TMP_Dropdown sortDropdown;
     public Toggle showArchivedToggle;
-    public TMP_Dropdown userDropdown; // только для админа
+    public TMP_Dropdown userDropdown;
 
     [Header("Создание проекта")]
     public GameObject createProjectPanel;
@@ -58,8 +57,10 @@ public class ProjectsUI : MonoBehaviour
 
         if (currentProjectText == null)
         {
+            var textObject = GameObject.Find("CurrentProjectText");
 
-                currentProjectText = GetComponent<TextMeshProUGUI>();
+            if (textObject != null)
+                currentProjectText = textObject.GetComponent<TextMeshProUGUI>();
         }
     }
 
@@ -76,7 +77,6 @@ public class ProjectsUI : MonoBehaviour
         createProjectPanel.SetActive(false);
         deleteConfirmPanel.SetActive(false);
 
-        // Подписки на фильтры
         searchInput.onValueChanged.AddListener(_ => ApplyFilters());
         sortDropdown.onValueChanged.AddListener(_ => ApplyFilters());
         showArchivedToggle.onValueChanged.AddListener(_ => ApplyFilters());
@@ -111,7 +111,6 @@ public class ProjectsUI : MonoBehaviour
 
         allProjects = await db.GetProjectsAsync();
 
-        //обновляем дропдаун пользователей и добавляем имеющихся юзеров в него
         SetupUserDropdown();
         ApplyFilters();
     }
@@ -126,20 +125,17 @@ public class ProjectsUI : MonoBehaviour
     {
         List<Project> filtered = new List<Project>(allProjects);
 
-        //Поиск
         if (!string.IsNullOrEmpty(searchInput.text))
         {
             string search = searchInput.text.ToLower();
             filtered = filtered.FindAll(p => p.Name.ToLower().Contains(search));
         }
 
-        //Архив
         if (!showArchivedToggle.isOn)
         {
             filtered = filtered.FindAll(p => !p.IsArchived);
         }
 
-        //Пользователь (только админ)
         if (db.IsAdmin && userDropdown != null && userDropdown.value > 0)
         {
             int selectedUserId =
@@ -148,22 +144,21 @@ public class ProjectsUI : MonoBehaviour
             filtered = filtered.FindAll(p => p.CreatedBy == selectedUserId);
         }
 
-        //Сортировка
         switch (sortDropdown.value)
         {
-            case 0: // новые
+            case 0:
                 filtered.Sort((a, b) => b.CreatedAt.CompareTo(a.CreatedAt));
                 break;
 
-            case 1: // старые
+            case 1:
                 filtered.Sort((a, b) => a.CreatedAt.CompareTo(b.CreatedAt));
                 break;
 
-            case 2: // A-Z
+            case 2:
                 filtered.Sort((a, b) => a.Name.CompareTo(b.Name));
                 break;
 
-            case 3: // Z-A
+            case 3:
                 filtered.Sort((a, b) => b.Name.CompareTo(a.Name));
                 break;
         }
@@ -345,3 +340,5 @@ public class ProjectsUI : MonoBehaviour
     }
 
 }
+
+

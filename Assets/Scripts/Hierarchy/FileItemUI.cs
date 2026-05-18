@@ -10,8 +10,8 @@ using Debug = UnityEngine.Debug;
 public class FileItemUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text fileNameText;
-    [SerializeField] private Button openButton;       // открыть файл
-    [SerializeField] private Button openPathButton;   // открыть папку
+    [SerializeField] private Button openButton;
+    [SerializeField] private Button openPathButton;
     [SerializeField] private Button deleteButton;
 
     private NodeFile file;
@@ -24,22 +24,16 @@ public class FileItemUI : MonoBehaviour
 
         fileNameText.text = f.FileName;
 
-        // открыть сам файл
         openButton.onClick.RemoveAllListeners();
         openButton.onClick.AddListener(OpenFile);
 
-        // открыть папку и выделить файл
         openPathButton.onClick.RemoveAllListeners();
         openPathButton.onClick.AddListener(OpenInFolder);
 
-        // удалить
         deleteButton.onClick.RemoveAllListeners();
         deleteButton.onClick.AddListener(() => OnDelete?.Invoke(file));
     }
 
-    // --------------------------
-    // ОТКРЫТЬ ФАЙЛ
-    // --------------------------
     void OpenFile()
     {
         if (file == null || string.IsNullOrEmpty(file.FilePath))
@@ -59,9 +53,6 @@ public class FileItemUI : MonoBehaviour
         Application.OpenURL("file:///" + path);
     }
 
-    // --------------------------
-    // ОТКРЫТЬ ПАПКУ
-    // --------------------------
     void OpenInFolder()
     {
         if (file == null || string.IsNullOrEmpty(file.FilePath))
@@ -78,7 +69,7 @@ public class FileItemUI : MonoBehaviour
             return;
         }
 
-        path = Path.GetFullPath(path); // 🔥 ВАЖНО
+        path = Path.GetFullPath(path);
 
         try
         {

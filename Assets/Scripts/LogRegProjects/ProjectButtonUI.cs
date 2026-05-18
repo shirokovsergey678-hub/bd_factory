@@ -41,21 +41,17 @@ public class ProjectButtonUI : MonoBehaviour
     {
         currentProject = project;
 
-        // Название
         if (nameText != null)
             nameText.text = project.Name;
 
-        // Дата
         if (dateText != null)
             dateText.text = project.CreatedAtFormatted;
 
-        // Описание
         if (descriptionText != null)
             descriptionText.text = string.IsNullOrEmpty(project.Description)
                 ? "Нет описания"
                 : project.Description;
 
-        // Пользователь (только для админа)
         if (userText != null)
         {
             if (isAdmin)
@@ -69,7 +65,6 @@ public class ProjectButtonUI : MonoBehaviour
             }
         }
 
-        // Архивация/разархивация
         if (archiveButton != null && unarchiveButton != null)
         {
             if (project.IsArchived)

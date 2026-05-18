@@ -147,7 +147,7 @@ public class SchemeMarkerUI : MonoBehaviour
         AddTrigger(trigger, EventTriggerType.Drag, data =>
         {
             var eventData = (PointerEventData)data;
-            
+
             if (draggedRect == buttonRect)
                 buttonWasDragged = true;
 
@@ -210,7 +210,11 @@ public class SchemeMarkerUI : MonoBehaviour
 
         lineRect.anchoredPosition = start + direction * 0.5f;
         lineRect.sizeDelta = new Vector2(direction.magnitude, lineThickness);
-        lineRect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+        lineRect.localRotation = Quaternion.Euler(
+            0f,
+            0f,
+            Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg
+        );
 
         rectTransform.SetAsLastSibling();
         lineRect.SetAsFirstSibling();
