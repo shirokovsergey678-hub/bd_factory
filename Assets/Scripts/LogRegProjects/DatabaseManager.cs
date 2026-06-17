@@ -3,11 +3,10 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using Mono.Cecil;
 
 public class DatabaseManager : MonoBehaviour
 {
-    private string connectionString = "Server=localhost;Database=factory;Integrated Security=True;";
+    private string connectionString = "Server=127.0.0.1,1433;Database=factory;User Id=sa;Password=123456Aa!;TrustServerCertificate=True;";
 
     private static DatabaseManager instance;
     public static DatabaseManager Instance => instance;
