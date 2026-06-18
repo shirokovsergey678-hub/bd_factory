@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 
 public class DatabaseManager : MonoBehaviour
@@ -111,5 +112,347 @@ public class DatabaseManager : MonoBehaviour
     public void Logout()
     {
         CurrentUser = null;
+    }
+
+    public async Task EnsureCatalogSchemaAsync()
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+IF OBJECT_ID('dbo.CatalogRootCategories', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.CatalogRootCategories
+    (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        Name NVARCHAR(200) NOT NULL,
+        SortOrder INT NOT NULL DEFAULT 0
+    );
+END;
+
+IF OBJECT_ID('dbo.CatalogChildCategories', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.CatalogChildCategories
+    (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        RootCategoryId INT NOT NULL,
+        Name NVARCHAR(200) NOT NULL,
+        SortOrder INT NOT NULL DEFAULT 0,
+        CONSTRAINT FK_CatalogChildCategories_Root
+            FOREIGN KEY (RootCategoryId) REFERENCES dbo.CatalogRootCategories(Id)
+            ON DELETE CASCADE
+    );
+END;
+
+IF OBJECT_ID('dbo.CatalogProducts', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.CatalogProducts
+    (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        ChildCategoryId INT NOT NULL,
+        Name NVARCHAR(200) NOT NULL DEFAULT '',
+        Description NVARCHAR(MAX) NOT NULL DEFAULT '',
+        ImagePath NVARCHAR(500) NULL,
+        SortOrder INT NOT NULL DEFAULT 0,
+        CONSTRAINT FK_CatalogProducts_Child
+            FOREIGN KEY (ChildCategoryId) REFERENCES dbo.CatalogChildCategories(Id)
+            ON DELETE CASCADE
+    );
+END;
+
+IF OBJECT_ID('dbo.CatalogProductFiles', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.CatalogProductFiles
+    (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        ProductId INT NOT NULL,
+        FileName NVARCHAR(260) NOT NULL,
+        FilePath NVARCHAR(500) NOT NULL,
+        CONSTRAINT FK_CatalogProductFiles_Product
+            FOREIGN KEY (ProductId) REFERENCES dbo.CatalogProducts(Id)
+            ON DELETE CASCADE
+    );
+END;
+", conn);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<List<CatalogRootCategory>> GetCatalogRootsAsync()
+    {
+        var list = new List<CatalogRootCategory>();
+
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+SELECT Id, Name
+FROM dbo.CatalogRootCategories
+ORDER BY SortOrder, Id", conn);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            list.Add(new CatalogRootCategory
+            {
+                Id = reader.GetInt32(0),
+                Name = reader.GetString(1)
+            });
+        }
+
+        return list;
+    }
+
+    public async Task<List<CatalogChildCategory>> GetCatalogChildrenAsync(int rootCategoryId)
+    {
+        var list = new List<CatalogChildCategory>();
+
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+SELECT Id, RootCategoryId, Name
+FROM dbo.CatalogChildCategories
+WHERE RootCategoryId=@id
+ORDER BY SortOrder, Id", conn);
+
+        cmd.Parameters.AddWithValue("@id", rootCategoryId);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            list.Add(new CatalogChildCategory
+            {
+                Id = reader.GetInt32(0),
+                RootCategoryId = reader.GetInt32(1),
+                Name = reader.GetString(2)
+            });
+        }
+
+        return list;
+    }
+
+    public async Task<List<CatalogProduct>> GetCatalogProductsAsync(int childCategoryId)
+    {
+        var list = new List<CatalogProduct>();
+
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+SELECT Id, ChildCategoryId, Name, Description, ImagePath
+FROM dbo.CatalogProducts
+WHERE ChildCategoryId=@id
+ORDER BY SortOrder, Id", conn);
+
+        cmd.Parameters.AddWithValue("@id", childCategoryId);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            list.Add(new CatalogProduct
+            {
+                Id = reader.GetInt32(0),
+                ChildCategoryId = reader.GetInt32(1),
+                Name = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                Description = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                ImagePath = reader.IsDBNull(4) ? "" : reader.GetString(4)
+            });
+        }
+
+        return list;
+    }
+
+    public async Task<List<CatalogProductFile>> GetCatalogProductFilesAsync(int productId)
+    {
+        var list = new List<CatalogProductFile>();
+
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+SELECT Id, ProductId, FileName, FilePath
+FROM dbo.CatalogProductFiles
+WHERE ProductId=@id
+ORDER BY Id", conn);
+
+        cmd.Parameters.AddWithValue("@id", productId);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            list.Add(new CatalogProductFile
+            {
+                Id = reader.GetInt32(0),
+                ProductId = reader.GetInt32(1),
+                FileName = reader.GetString(2),
+                FilePath = reader.GetString(3)
+            });
+        }
+
+        return list;
+    }
+
+    public async Task<CatalogRootCategory> GetCatalogRootDetailsAsync(int rootCategoryId)
+    {
+        CatalogRootCategory root = null;
+
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var rootCmd = new SqlCommand(@"
+SELECT Id, Name
+FROM dbo.CatalogRootCategories
+WHERE Id=@id", conn);
+        rootCmd.Parameters.AddWithValue("@id", rootCategoryId);
+
+        using (var rootReader = await rootCmd.ExecuteReaderAsync())
+        {
+            if (await rootReader.ReadAsync())
+            {
+                root = new CatalogRootCategory
+                {
+                    Id = rootReader.GetInt32(0),
+                    Name = rootReader.GetString(1)
+                };
+            }
+        }
+
+        if (root == null)
+            return null;
+
+        root.Children = await GetCatalogChildrenAsync(rootCategoryId);
+
+        foreach (var child in root.Children)
+        {
+            child.Products = await GetCatalogProductsAsync(child.Id);
+
+            foreach (var product in child.Products)
+                product.Files = await GetCatalogProductFilesAsync(product.Id);
+        }
+
+        return root;
+    }
+
+    public async Task<int> CreateCatalogRootAsync(string name)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+INSERT INTO dbo.CatalogRootCategories (Name, SortOrder)
+OUTPUT INSERTED.Id
+VALUES (@name, 0)", conn);
+
+        cmd.Parameters.AddWithValue("@name", name);
+        return (int)await cmd.ExecuteScalarAsync();
+    }
+
+    public async Task<int> CreateCatalogChildAsync(int rootCategoryId, string name)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+INSERT INTO dbo.CatalogChildCategories (RootCategoryId, Name, SortOrder)
+OUTPUT INSERTED.Id
+VALUES (@rootId, @name, 0)", conn);
+
+        cmd.Parameters.AddWithValue("@rootId", rootCategoryId);
+        cmd.Parameters.AddWithValue("@name", name);
+        return (int)await cmd.ExecuteScalarAsync();
+    }
+
+    public async Task<int> CreateProductAsync(int childCategoryId)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+INSERT INTO dbo.CatalogProducts (ChildCategoryId, Name, Description, ImagePath, SortOrder)
+OUTPUT INSERTED.Id
+VALUES (@childId, '', '', NULL, 0)", conn);
+
+        cmd.Parameters.AddWithValue("@childId", childCategoryId);
+        return (int)await cmd.ExecuteScalarAsync();
+    }
+
+    public async Task DeleteCatalogRootAsync(int rootCategoryId)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand("DELETE FROM dbo.CatalogRootCategories WHERE Id=@id", conn);
+        cmd.Parameters.AddWithValue("@id", rootCategoryId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task DeleteCatalogChildAsync(int childCategoryId)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand("DELETE FROM dbo.CatalogChildCategories WHERE Id=@id", conn);
+        cmd.Parameters.AddWithValue("@id", childCategoryId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task DeleteProductAsync(int productId)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand("DELETE FROM dbo.CatalogProducts WHERE Id=@id", conn);
+        cmd.Parameters.AddWithValue("@id", productId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task UpdateProductAsync(CatalogProduct product)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+UPDATE dbo.CatalogProducts
+SET Name=@name,
+    Description=@description,
+    ImagePath=@imagePath
+WHERE Id=@id", conn);
+
+        cmd.Parameters.AddWithValue("@id", product.Id);
+        cmd.Parameters.AddWithValue("@name", product.Name ?? "");
+        cmd.Parameters.AddWithValue("@description", product.Description ?? "");
+        cmd.Parameters.AddWithValue("@imagePath", string.IsNullOrWhiteSpace(product.ImagePath)
+            ? DBNull.Value
+            : (object)product.ImagePath);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task AddProductFileAsync(int productId, string fileName, string filePath)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand(@"
+INSERT INTO dbo.CatalogProductFiles (ProductId, FileName, FilePath)
+VALUES (@productId, @fileName, @filePath)", conn);
+
+        cmd.Parameters.AddWithValue("@productId", productId);
+        cmd.Parameters.AddWithValue("@fileName", fileName);
+        cmd.Parameters.AddWithValue("@filePath", filePath);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task DeleteProductFileAsync(int fileId)
+    {
+        using var conn = new SqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var cmd = new SqlCommand("DELETE FROM dbo.CatalogProductFiles WHERE Id=@id", conn);
+        cmd.Parameters.AddWithValue("@id", fileId);
+
+        await cmd.ExecuteNonQueryAsync();
     }
 }
