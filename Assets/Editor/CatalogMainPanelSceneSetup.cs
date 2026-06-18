@@ -7,6 +7,7 @@ using TMPro;
 public static class CatalogMainPanelSceneSetup
 {
     private const string ScenePath = "Assets/Scenes/LogReg.unity";
+    private const string ResizeCursorTexturePath = "Assets/Materials/cursor_resize_horizontal.png";
 
     [MenuItem("Tools/Catalog/Setup MainPanel Scene")]
     public static void SetupFromMenu()
@@ -167,11 +168,14 @@ public static class CatalogMainPanelSceneSetup
         if (resizer == null)
             resizer = handle.gameObject.AddComponent<HierarchyPanelResizer>();
 
+        Texture2D resizeCursorTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(ResizeCursorTexturePath);
+
         SerializedObject so = new SerializedObject(resizer);
         so.FindProperty("bodyRoot").objectReferenceValue = bodyRoot;
         so.FindProperty("leftPanel").objectReferenceValue = leftPanel;
         so.FindProperty("rightPanel").objectReferenceValue = rightPanel;
         so.FindProperty("handleRect").objectReferenceValue = handle;
+        so.FindProperty("resizeCursorTexture").objectReferenceValue = resizeCursorTexture;
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 

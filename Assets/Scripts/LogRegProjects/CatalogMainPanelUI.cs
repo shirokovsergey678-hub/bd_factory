@@ -369,7 +369,7 @@ public class CatalogMainPanelUI : MonoBehaviour
         if (db.IsAdmin)
         {
             nameInput = CreateInputField(infoArea, TextProductName, product.Name);
-            descriptionInput = CreateInputField(infoArea, TextProductDescription, product.Description, 90, true);
+            descriptionInput = CreateInputField(infoArea, TextProductDescription, product.Description, 110, true);
         }
         else
         {
@@ -598,23 +598,73 @@ public class CatalogMainPanelUI : MonoBehaviour
         layout.preferredHeight = height;
 
         TMP_InputField input = root.gameObject.AddComponent<TMP_InputField>();
+        input.customCaretColor = true;
+        input.caretColor = Color.white;
+        input.selectionColor = new Color(0.16f, 0.47f, 0.78f, 0.45f);
+        input.caretWidth = 2;
+        input.scrollSensitivity = 20f;
+        input.lineType = multiLine ? TMP_InputField.LineType.MultiLineNewline : TMP_InputField.LineType.SingleLine;
+        input.richText = false;
 
         RectTransform viewport = CreatePanel("TextArea", root, Color.clear);
-        Stretch(viewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 5f), new Vector2(-8f, -5f));
+        float rightPadding = multiLine ? 24f : 8f;
+        Stretch(viewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 5f), new Vector2(-rightPadding, -5f));
         viewport.gameObject.AddComponent<RectMask2D>();
         input.textViewport = viewport;
 
-        TextMeshProUGUI text = CreateText(viewport, value ?? string.Empty, 16, TextAlignmentOptions.TopLeft, Color.white) as TextMeshProUGUI;
+        TextMeshProUGUI text = CreateText(
+            viewport,
+            value ?? string.Empty,
+            16,
+            multiLine ? TextAlignmentOptions.TopLeft : TextAlignmentOptions.MidlineLeft,
+            Color.white) as TextMeshProUGUI;
         text.enableWordWrapping = multiLine;
+        text.overflowMode = TextOverflowModes.Overflow;
+        text.raycastTarget = false;
         input.textComponent = text;
 
-        TextMeshProUGUI placeholderText = CreateText(viewport, placeholder, 16, TextAlignmentOptions.TopLeft, new Color(1f, 1f, 1f, 0.7f)) as TextMeshProUGUI;
+        TextMeshProUGUI placeholderText = CreateText(
+            viewport,
+            placeholder,
+            16,
+            multiLine ? TextAlignmentOptions.TopLeft : TextAlignmentOptions.MidlineLeft,
+            new Color(1f, 1f, 1f, 0.7f)) as TextMeshProUGUI;
+        placeholderText.enableWordWrapping = multiLine;
+        placeholderText.overflowMode = TextOverflowModes.Overflow;
+        placeholderText.raycastTarget = false;
         input.placeholder = placeholderText;
 
-        input.lineType = multiLine ? TMP_InputField.LineType.MultiLineNewline : TMP_InputField.LineType.SingleLine;
         input.text = value ?? string.Empty;
 
+        if (multiLine)
+            AttachInputScrollbar(root, input);
+
         return input;
+    }
+
+    void AttachInputScrollbar(RectTransform inputRoot, TMP_InputField input)
+    {
+        RectTransform scrollbarRoot = CreatePanel("Scrollbar", inputRoot, new Color(0.24f, 0.24f, 0.24f, 1f));
+        Stretch(scrollbarRoot, new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-14f, 4f), new Vector2(-4f, -4f));
+        scrollbarRoot.pivot = new Vector2(1f, 0.5f);
+
+        Image scrollbarImage = scrollbarRoot.GetComponent<Image>();
+        scrollbarImage.raycastTarget = true;
+
+        Scrollbar scrollbar = scrollbarRoot.gameObject.AddComponent<Scrollbar>();
+        scrollbar.direction = Scrollbar.Direction.BottomToTop;
+
+        RectTransform slidingArea = CreatePanel("Sliding Area", scrollbarRoot, Color.clear);
+        Stretch(slidingArea, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(2f, 2f), new Vector2(-2f, -2f));
+
+        RectTransform handle = CreatePanel("Handle", slidingArea, new Color(0.82f, 0.82f, 0.82f, 1f));
+        Stretch(handle, new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, new Vector2(0f, 16f));
+
+        scrollbar.handleRect = handle;
+        scrollbar.targetGraphic = handle.GetComponent<Image>();
+        scrollbar.size = 0.25f;
+
+        input.verticalScrollbar = scrollbar;
     }
 
     TMP_Text CreateRowLabel(RectTransform parent, string value, float size, Color color)
@@ -701,7 +751,15 @@ public class CatalogMainPanelUI : MonoBehaviour
 
     Button CreateLinkButton(RectTransform parent, string label, Action action)
     {
-        return CreateButton(parent, label, action, Color.clear, Color.black, -1f, 26f, TextAlignmentOptions.MidlineLeft, true);
+        Button button = CreateButton(parent, label, action, Color.clear, Color.black, -1f, 26f, TextAlignmentOptions.MidlineLeft, true);
+        TMP_Text text = button.GetComponentInChildren<TextMeshProUGUI>();
+        if (text != null)
+        {
+            text.enableWordWrapping = false;
+            text.overflowMode = TextOverflowModes.Ellipsis;
+        }
+
+        return button;
     }
 
     Button CreateMiniButton(RectTransform parent, string label, Action action, float size)
