@@ -22,7 +22,7 @@ public class CatalogMainPanelUI : MonoBehaviour
     private const string TextPickImage = "\u0412\u044b\u0431\u0435\u0440\u0438 \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435";
     private const string TextProductName = "\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u0430";
     private const string TextProductDescription = "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u0430";
-    private const string TextSaveProduct = "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043f\u0440\u043e\u0434\u0443\u043a\u0442";
+    private const string TextSaveProduct = "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f";
     private const string TextUnnamed = "\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f";
     private const string TextDescriptionEmpty = "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u043d\u0435 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u043e";
     private const string TextTechDescription = "\u0422\u0435\u0445\u043d\u0438\u0447\u0435\u0441\u043a\u043e\u0435 \u043e\u043f\u0438\u0441\u0430\u043d\u0438\u0435";
@@ -160,16 +160,16 @@ public class CatalogMainPanelUI : MonoBehaviour
 
             HorizontalLayoutGroup headerLayout = header.gameObject.AddComponent<HorizontalLayoutGroup>();
             headerLayout.childControlHeight = true;
-            headerLayout.childControlWidth = false;
+            headerLayout.childControlWidth = true;
             headerLayout.childForceExpandHeight = false;
             headerLayout.childForceExpandWidth = false;
-            headerLayout.spacing = 6;
+            headerLayout.spacing = 4;
 
             CreateMiniButton(header, expandedRoots[root.Id] ? "v" : ">", () =>
             {
                 expandedRoots[root.Id] = !expandedRoots[root.Id];
                 _ = RefreshAsync();
-            }, 28f);
+            }, 22f);
 
             CreateLinkButton(header, root.Name, () =>
             {
@@ -179,24 +179,13 @@ public class CatalogMainPanelUI : MonoBehaviour
 
             if (db.IsAdmin)
             {
-                CreateMiniButton(header, "+", () =>
-                {
-                    ShowPrompt(TextNewChild, async name =>
-                    {
-                        await db.CreateCatalogChildAsync(root.Id, name);
-                        expandedRoots[root.Id] = true;
-                        selectedRootId = root.Id;
-                        await RefreshAsync();
-                    });
-                }, 28f);
-
                 CreateMiniDangerButton(header, "x", async () =>
                 {
                     await db.DeleteCatalogRootAsync(root.Id);
                     if (selectedRootId == root.Id)
                         selectedRootId = -1;
                     await RefreshAsync();
-                }, 28f);
+                }, 22f);
             }
 
             if (!expandedRoots[root.Id])
@@ -209,10 +198,11 @@ public class CatalogMainPanelUI : MonoBehaviour
 
                 HorizontalLayoutGroup childLayout = childRow.gameObject.AddComponent<HorizontalLayoutGroup>();
                 childLayout.childControlHeight = true;
-                childLayout.childControlWidth = false;
+                childLayout.childControlWidth = true;
                 childLayout.childForceExpandHeight = false;
                 childLayout.childForceExpandWidth = false;
                 childLayout.padding = new RectOffset(24, 0, 0, 0);
+                childLayout.spacing = 4;
 
                 CreateLinkButton(childRow, child.Name, () =>
                 {
@@ -227,19 +217,21 @@ public class CatalogMainPanelUI : MonoBehaviour
                         await db.DeleteCatalogChildAsync(child.Id);
                         selectedRootId = root.Id;
                         await RefreshAsync();
-                    }, 28f);
+                    }, 22f);
                 }
             }
 
             if (db.IsAdmin)
             {
                 RectTransform addChildRow = CreatePanel("AddChildRow", rootCard, Color.clear);
+                addChildRow.gameObject.AddComponent<LayoutElement>().preferredHeight = 24;
                 HorizontalLayoutGroup addChildLayout = addChildRow.gameObject.AddComponent<HorizontalLayoutGroup>();
                 addChildLayout.childControlHeight = true;
-                addChildLayout.childControlWidth = false;
+                addChildLayout.childControlWidth = true;
                 addChildLayout.childForceExpandHeight = false;
                 addChildLayout.childForceExpandWidth = false;
                 addChildLayout.padding = new RectOffset(24, 0, 0, 0);
+                addChildLayout.spacing = 4;
 
                 CreateMiniButton(addChildRow, "+", () =>
                 {
@@ -249,7 +241,7 @@ public class CatalogMainPanelUI : MonoBehaviour
                         selectedRootId = root.Id;
                         await RefreshAsync();
                     });
-                }, 28f);
+                }, 22f);
             }
         }
     }
@@ -316,6 +308,8 @@ public class CatalogMainPanelUI : MonoBehaviour
     {
         RectTransform card = CreatePanel($"Product_{product.Id}", parent, Color.white);
         AddOutline(card, new Color(0.85f, 0.85f, 0.85f, 1f));
+        TMP_InputField nameInput = null;
+        TMP_InputField descriptionInput = null;
 
         VerticalLayoutGroup cardLayout = card.gameObject.AddComponent<VerticalLayoutGroup>();
         cardLayout.childControlHeight = true;
@@ -332,31 +326,6 @@ public class CatalogMainPanelUI : MonoBehaviour
         topLayout.childForceExpandHeight = false;
         topLayout.childForceExpandWidth = false;
         topLayout.spacing = 12;
-
-        if (db.IsAdmin)
-        {
-            RectTransform actionsRow = CreatePanel("ActionsRow", card, Color.clear);
-            HorizontalLayoutGroup actionsLayout = actionsRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-            actionsLayout.childControlHeight = true;
-            actionsLayout.childControlWidth = false;
-            actionsLayout.childForceExpandHeight = false;
-            actionsLayout.childForceExpandWidth = false;
-            actionsLayout.childAlignment = TextAnchor.MiddleRight;
-            actionsLayout.spacing = 6;
-
-            CreateDangerButton(actionsRow, TextDeleteProduct, async () =>
-            {
-                await db.DeleteProductAsync(product.Id);
-
-                if (!string.IsNullOrWhiteSpace(product.ImagePath))
-                    CatalogFileStorage.DeleteIfExists(product.ImagePath);
-
-                foreach (CatalogProductFile productFile in product.Files)
-                    CatalogFileStorage.DeleteIfExists(productFile.FilePath);
-
-                await BuildRightPanelAsync(child.Id);
-            }, 170f, 30f);
-        }
 
         RectTransform imageArea = CreatePanel("ImageArea", topRow, new Color(0.55f, 0.55f, 0.55f, 1f));
         LayoutElement imageLayout = imageArea.gameObject.AddComponent<LayoutElement>();
@@ -399,16 +368,8 @@ public class CatalogMainPanelUI : MonoBehaviour
 
         if (db.IsAdmin)
         {
-            TMP_InputField nameInput = CreateInputField(infoArea, TextProductName, product.Name);
-            TMP_InputField descriptionInput = CreateInputField(infoArea, TextProductDescription, product.Description, 90, true);
-
-            CreatePrimaryButton(infoArea, TextSaveProduct, async () =>
-            {
-                product.Name = nameInput.text;
-                product.Description = descriptionInput.text;
-                await db.UpdateProductAsync(product);
-                await BuildRightPanelAsync(child.Id);
-            });
+            nameInput = CreateInputField(infoArea, TextProductName, product.Name);
+            descriptionInput = CreateInputField(infoArea, TextProductDescription, product.Description, 90, true);
         }
         else
         {
@@ -439,14 +400,15 @@ public class CatalogMainPanelUI : MonoBehaviour
         filesLayout.padding = new RectOffset(6, 6, 6, 6);
 
         RectTransform filesHeader = CreatePanel("FilesHeader", filesSection, Color.clear);
+        filesHeader.gameObject.AddComponent<LayoutElement>().preferredHeight = 34;
         HorizontalLayoutGroup filesHeaderLayout = filesHeader.gameObject.AddComponent<HorizontalLayoutGroup>();
         filesHeaderLayout.childControlHeight = true;
-        filesHeaderLayout.childControlWidth = false;
+        filesHeaderLayout.childControlWidth = true;
         filesHeaderLayout.childForceExpandHeight = false;
         filesHeaderLayout.childForceExpandWidth = false;
         filesHeaderLayout.spacing = 8;
 
-        CreateText(filesHeader, TextTechDescription, 14, TextAlignmentOptions.MidlineLeft, Color.white);
+        CreateRowLabel(filesHeader, TextTechDescription, 14, Color.white);
 
         if (db.IsAdmin)
         {
@@ -473,11 +435,46 @@ public class CatalogMainPanelUI : MonoBehaviour
         if (product.Files.Count == 0)
         {
             CreateText(fileList, TextNoFiles, 13, TextAlignmentOptions.TopLeft, new Color(0.85f, 0.85f, 0.85f, 1f));
-            return;
+        }
+        else
+        {
+            foreach (CatalogProductFile file in product.Files)
+                BuildFileRow(fileList, child.Id, file);
         }
 
-        foreach (CatalogProductFile file in product.Files)
-            BuildFileRow(fileList, child.Id, file);
+        if (db.IsAdmin)
+        {
+            RectTransform actionsRow = CreatePanel("ActionsRow", card, Color.clear);
+            actionsRow.gameObject.AddComponent<LayoutElement>().preferredHeight = 42;
+
+            HorizontalLayoutGroup actionsLayout = actionsRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            actionsLayout.childControlHeight = true;
+            actionsLayout.childControlWidth = true;
+            actionsLayout.childForceExpandHeight = false;
+            actionsLayout.childForceExpandWidth = true;
+            actionsLayout.spacing = 2;
+
+            CreatePrimaryButton(actionsRow, TextSaveProduct, async () =>
+            {
+                product.Name = nameInput.text;
+                product.Description = descriptionInput.text;
+                await db.UpdateProductAsync(product);
+                await BuildRightPanelAsync(child.Id);
+            }, -1f, 42f);
+
+            CreateDangerButton(actionsRow, TextDeleteProduct, async () =>
+            {
+                await db.DeleteProductAsync(product.Id);
+
+                if (!string.IsNullOrWhiteSpace(product.ImagePath))
+                    CatalogFileStorage.DeleteIfExists(product.ImagePath);
+
+                foreach (CatalogProductFile productFile in product.Files)
+                    CatalogFileStorage.DeleteIfExists(productFile.FilePath);
+
+                await BuildRightPanelAsync(child.Id);
+            }, -1f, 42f);
+        }
     }
 
     void BuildFileRow(RectTransform parent, int childId, CatalogProductFile file)
@@ -618,6 +615,19 @@ public class CatalogMainPanelUI : MonoBehaviour
         input.text = value ?? string.Empty;
 
         return input;
+    }
+
+    TMP_Text CreateRowLabel(RectTransform parent, string value, float size, Color color)
+    {
+        RectTransform root = CreatePanel("Label", parent, Color.clear);
+        LayoutElement layout = root.gameObject.AddComponent<LayoutElement>();
+        layout.flexibleWidth = 1f;
+        layout.preferredHeight = 30f;
+
+        TMP_Text text = CreateText(root, value, size, TextAlignmentOptions.MidlineLeft, color);
+        text.margin = new Vector4(4f, 0f, 4f, 0f);
+        text.enableWordWrapping = false;
+        return text;
     }
 
     void CreateImagePreview(RectTransform parent, string imagePath)

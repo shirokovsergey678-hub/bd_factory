@@ -49,6 +49,9 @@ public static class CatalogMainPanelSceneSetup
         RectTransform rightPanel = EnsurePanel(bodyRoot, "RightPanel", typeof(Image), ParseColor("FCFCFC"));
         Stretch(rightPanel, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(298f, 0f), new Vector2(0f, 0f));
 
+        RectTransform resizeHandle = EnsurePanel(bodyRoot, "HierarchyResizeHandle", typeof(Image), new Color(0f, 0f, 0f, 0.08f));
+        SetupResizeHandle(resizeHandle, bodyRoot, leftPanel, rightPanel);
+
         ScrollRect leftScroll = EnsureScrollArea(leftPanel, "LeftScroll", out RectTransform leftContent, new Vector2(6f, 6f), new Vector2(-6f, -6f));
         ScrollRect rightScroll = EnsureScrollArea(rightPanel, "RightScroll", out RectTransform rightContent, new Vector2(8f, 6f), new Vector2(-8f, -6f));
 
@@ -146,6 +149,30 @@ public static class CatalogMainPanelSceneSetup
             fitter = content.gameObject.AddComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+    }
+
+    private static void SetupResizeHandle(RectTransform handle, RectTransform bodyRoot, RectTransform leftPanel, RectTransform rightPanel)
+    {
+        handle.SetSiblingIndex(1);
+        handle.anchorMin = new Vector2(0f, 0f);
+        handle.anchorMax = new Vector2(0f, 1f);
+        handle.pivot = new Vector2(0.5f, 0.5f);
+        handle.sizeDelta = new Vector2(10f, 0f);
+        handle.anchoredPosition = new Vector2(296.5f, 0f);
+
+        Image image = handle.GetComponent<Image>();
+        image.raycastTarget = true;
+
+        HierarchyPanelResizer resizer = handle.GetComponent<HierarchyPanelResizer>();
+        if (resizer == null)
+            resizer = handle.gameObject.AddComponent<HierarchyPanelResizer>();
+
+        SerializedObject so = new SerializedObject(resizer);
+        so.FindProperty("bodyRoot").objectReferenceValue = bodyRoot;
+        so.FindProperty("leftPanel").objectReferenceValue = leftPanel;
+        so.FindProperty("rightPanel").objectReferenceValue = rightPanel;
+        so.FindProperty("handleRect").objectReferenceValue = handle;
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static void AssignReferences(
