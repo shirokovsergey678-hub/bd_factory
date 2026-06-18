@@ -5,4 +5,5 @@ public class NodeFile
 
     public string FileName;
     public string FilePath;
+    public byte[] FileData;
 }

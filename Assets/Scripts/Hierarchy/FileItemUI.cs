@@ -4,6 +4,7 @@ using TMPro;
 using System;
 using System.Diagnostics;
 using System.IO;
+using SFB;
 
 using Debug = UnityEngine.Debug;
 
@@ -28,7 +29,7 @@ public class FileItemUI : MonoBehaviour
         openButton.onClick.AddListener(OpenFile);
 
         openPathButton.onClick.RemoveAllListeners();
-        openPathButton.onClick.AddListener(OpenInFolder);
+        openPathButton.onClick.AddListener(SaveFileAs);
 
         deleteButton.onClick.RemoveAllListeners();
         deleteButton.onClick.AddListener(() => OnDelete?.Invoke(file));
@@ -36,47 +37,91 @@ public class FileItemUI : MonoBehaviour
 
     void OpenFile()
     {
-        if (file == null || string.IsNullOrEmpty(file.FilePath))
+        string path = GetAvailableFilePath();
+
+        if (string.IsNullOrEmpty(path))
         {
             Debug.LogError("Файл не задан");
-            return;
-        }
-
-        string path = Path.GetFullPath(file.FilePath);
-
-        if (!File.Exists(path))
-        {
-            Debug.LogError("Файл не найден: " + path);
             return;
         }
 
         Application.OpenURL("file:///" + path);
     }
 
-    void OpenInFolder()
+    void SaveFileAs()
     {
-        if (file == null || string.IsNullOrEmpty(file.FilePath))
+        if (file == null)
         {
-            Debug.LogError("Путь не задан");
+            Debug.LogError("Файл не задан");
             return;
         }
 
-        string path = file.FilePath;
+        string savePath = StandaloneFileBrowser.SaveFilePanel(
+            "Сохранить файл",
+            "",
+            Path.GetFileNameWithoutExtension(file.FileName),
+            Path.GetExtension(file.FileName).TrimStart('.')
+        );
 
-        if (!File.Exists(path))
+        if (string.IsNullOrEmpty(savePath))
+            return;
+
+        if (file.FileData != null && file.FileData.Length > 0)
         {
-            Debug.LogError("Файл не найден: " + path);
+            File.WriteAllBytes(savePath, file.FileData);
+            ShowFileInExplorer(savePath);
             return;
         }
 
-        path = Path.GetFullPath(path);
+        string sourcePath = GetAvailableFilePath();
 
+        if (string.IsNullOrEmpty(sourcePath))
+        {
+            Debug.LogError("Файл не найден");
+            return;
+        }
+
+        File.Copy(sourcePath, savePath, true);
+        ShowFileInExplorer(savePath);
+    }
+
+    string GetAvailableFilePath()
+    {
+        if (file == null)
+            return null;
+
+        if (file.FileData != null && file.FileData.Length > 0)
+            return RestoreFileFromDatabase();
+
+        if (string.IsNullOrEmpty(file.FilePath))
+            return null;
+
+        string path = Path.GetFullPath(file.FilePath);
+        return File.Exists(path) ? path : null;
+    }
+
+    string RestoreFileFromDatabase()
+    {
+        string folder = Path.Combine(Application.persistentDataPath, "DatabaseFiles");
+
+        if (!Directory.Exists(folder))
+            Directory.CreateDirectory(folder);
+
+        string safeName = string.Join("_", file.FileName.Split(Path.GetInvalidFileNameChars()));
+        string path = Path.Combine(folder, $"{file.Id}_{safeName}");
+
+        File.WriteAllBytes(path, file.FileData);
+        return path;
+    }
+
+    void ShowFileInExplorer(string path)
+    {
         try
         {
             Process.Start(new ProcessStartInfo
             {
                 FileName = "explorer.exe",
-                Arguments = $"/select,\"{path}\"",
+                Arguments = $"/select,\"{Path.GetFullPath(path)}\"",
                 UseShellExecute = true
             });
         }

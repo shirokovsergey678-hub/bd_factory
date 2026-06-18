@@ -195,13 +195,14 @@ public class NodeDetailsUI : MonoBehaviour
         if (paths.Length == 0)
             return;
 
-        string savedPath = FileManager.SaveFile(paths[0]);
+        string sourcePath = paths[0];
 
         var file = new NodeFile
         {
             NodeId = currentNode.Id,
-            FileName = Path.GetFileName(paths[0]),
-            FilePath = savedPath
+            FileName = Path.GetFileName(sourcePath),
+            FilePath = sourcePath,
+            FileData = File.ReadAllBytes(sourcePath)
         };
 
         await db.AddNodeFileAsync(file);
@@ -235,7 +236,6 @@ public class NodeDetailsUI : MonoBehaviour
 
     async void DeleteFile(NodeFile file)
     {
-        FileManager.DeleteFile(file.FilePath);
         await db.DeleteNodeFileAsync(file.Id);
         LoadFiles(showVersion);
     }

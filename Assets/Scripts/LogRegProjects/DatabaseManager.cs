@@ -420,7 +420,8 @@ public class DatabaseManager : MonoBehaviour
         await conn.OpenAsync();
 
         var cmd = new SqlCommand(
-            "SELECT Id, NodeId, FileName, FilePath FROM NodeFiles WHERE NodeId=@id", conn);
+            "SELECT Id, NodeId, FileName, FilePath, FileData FROM NodeFiles WHERE NodeId=@id",
+            conn);
 
         cmd.Parameters.AddWithValue("@id", nodeId);
 
@@ -433,7 +434,8 @@ public class DatabaseManager : MonoBehaviour
                 Id = reader.GetInt32(0),
                 NodeId = reader.GetInt32(1),
                 FileName = reader.GetString(2),
-                FilePath = reader.GetString(3)
+                FilePath = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                FileData = reader.IsDBNull(4) ? null : (byte[])reader["FileData"]
             });
         }
 
@@ -445,12 +447,13 @@ public class DatabaseManager : MonoBehaviour
         await conn.OpenAsync();
 
         var cmd = new SqlCommand(@"
-        INSERT INTO NodeFiles (NodeId, FileName, FilePath)
-        VALUES (@n, @name, @path)", conn);
+        INSERT INTO NodeFiles (NodeId, FileName, FilePath, FileData)
+        VALUES (@n, @name, @path, @data)", conn);
 
         cmd.Parameters.AddWithValue("@n", file.NodeId);
         cmd.Parameters.AddWithValue("@name", file.FileName);
-        cmd.Parameters.AddWithValue("@path", file.FilePath);
+        cmd.Parameters.AddWithValue("@path", (object)file.FilePath ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@data", (object)file.FileData ?? DBNull.Value);
 
         await cmd.ExecuteNonQueryAsync();
     }
