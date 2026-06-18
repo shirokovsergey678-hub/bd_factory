@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 
 // Логин/регистрация
 public class AuthUI : MonoBehaviour
@@ -11,6 +10,10 @@ public class AuthUI : MonoBehaviour
     public GameObject loginPanel;
     public GameObject registerPanel;
     public GameObject mainPanel;
+
+    [Header("Главная панель")]
+    public TextMeshProUGUI welcomeText;
+    public Button logoutButton;
 
     [Header("Логин")]
     public TMP_InputField loginUsername;
@@ -41,6 +44,9 @@ public class AuthUI : MonoBehaviour
         goToRegisterButton.onClick.AddListener(() => ShowPanel(registerPanel));
         registerButton.onClick.AddListener(OnRegister);
         backToLoginButton.onClick.AddListener(() => ShowPanel(loginPanel));
+
+        if (logoutButton != null)
+            logoutButton.onClick.AddListener(OnLogout);
 
         ShowPanel(loginPanel);
 
@@ -140,7 +146,18 @@ public class AuthUI : MonoBehaviour
 
     void ShowMainPanel()
     {
+        UpdateWelcomeText();
         ShowPanel(mainPanel);
+    }
+
+    void UpdateWelcomeText()
+    {
+        if (welcomeText == null || db?.CurrentUser == null)
+            return;
+
+        welcomeText.text =
+            $"Привет, {db.CurrentUser.Username}! Роль: " +
+            $"{(db.IsAdmin ? "Администратор" : "Пользователь")}";
     }
 
     async void OnRegister()
@@ -204,5 +221,18 @@ public class AuthUI : MonoBehaviour
         registerPanel.SetActive(false);
         mainPanel.SetActive(false);
         panel.SetActive(true);
+    }
+
+    void OnLogout()
+    {
+        db?.Logout();
+
+        loginUsername.text = "";
+        loginPassword.text = "";
+        loginMessage.text = "";
+        regMessage.text = "";
+        ResetColorInputField();
+
+        ShowPanel(loginPanel);
     }
 }
