@@ -6,7 +6,7 @@ using System.Data.SqlClient;
 
 public class DatabaseManager : MonoBehaviour
 {
-    private string connectionString = "Server=127.0.0.1,1433;Database=factory;User Id=sa;Password=123456Aa!;TrustServerCertificate=True;";
+    private string connectionString = "Server=127.0.0.1,1433;Database=factory;Integrated Security=True;TrustServerCertificate=True;";
 
     private static DatabaseManager instance;
     public static DatabaseManager Instance => instance;
@@ -167,8 +167,26 @@ public class DatabaseManager : MonoBehaviour
     {
         try
         {
+            name = name?.Trim();
+
+            if (string.IsNullOrWhiteSpace(name))
+                return (false, "Невозможно создать проект: поле названия не заполнено");
+
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync();
+
+            var checkCmd = new SqlCommand(@"
+                SELECT COUNT(*)
+                FROM Projects
+                WHERE CreatedBy=@u AND LOWER(Name)=LOWER(@n)", conn);
+
+            checkCmd.Parameters.AddWithValue("@u", CurrentUser.Id);
+            checkCmd.Parameters.AddWithValue("@n", name);
+
+            int count = (int)await checkCmd.ExecuteScalarAsync();
+
+            if (count > 0)
+                return (false, "Проект с таким именем уже существует");
 
             var cmd = new SqlCommand(@"
                 INSERT INTO Projects (Name, Description, CreatedBy)
@@ -232,12 +250,19 @@ public class DatabaseManager : MonoBehaviour
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync();
 
-            var cmd = new SqlCommand("DELETE FROM Projects WHERE Id=@id", conn);
+            string query = IsAdmin
+                ? "DELETE FROM Projects WHERE Id=@id"
+                : "DELETE FROM Projects WHERE Id=@id AND CreatedBy=@userId";
+
+            var cmd = new SqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@id", id);
+
+            if (!IsAdmin)
+                cmd.Parameters.AddWithValue("@userId", CurrentUser.Id);
 
             int rows = await cmd.ExecuteNonQueryAsync();
 
-            return (rows > 0, rows > 0 ? "Удалено" : "Не найдено");
+            return (rows > 0, rows > 0 ? "Удалено" : "Нет прав на удаление проекта");
         }
         catch (Exception ex)
         {

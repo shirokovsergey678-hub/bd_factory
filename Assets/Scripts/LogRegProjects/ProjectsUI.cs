@@ -205,13 +205,15 @@ public class ProjectsUI : MonoBehaviour
 
         if (ui == null) return;
 
-        ui.SetData(project, db.IsAdmin);
+        bool canDelete = db.IsAdmin || project.CreatedBy == db.CurrentUser.Id;
+
+        ui.SetData(project, db.IsAdmin, canDelete);
 
         ui.OnArchive += ArchiveProject;
         ui.OnUnarchive += UnarchiveProject;
         ui.OnClick += OpenProject;
 
-        if (db.IsAdmin)
+        if (canDelete)
             ui.OnDelete += ShowDeleteConfirm;
     }
 
@@ -286,9 +288,26 @@ public class ProjectsUI : MonoBehaviour
 
     async void OnCreateProject()
     {
+        string projectName = projectNameInput.text.Trim();
+        string projectDescription = projectDescriptionInput.text;
+
+        createProjectMessage.text = "";
+
+        if (string.IsNullOrWhiteSpace(projectName))
+        {
+            createProjectMessage.text = "Невозможно создать проект: поле названия не заполнено";
+            return;
+        }
+
+        if (HasProjectWithName(projectName))
+        {
+            createProjectMessage.text = "Проект с таким именем уже существует";
+            return;
+        }
+
         var result = await db.CreateProjectAsync(
-            projectNameInput.text,
-            projectDescriptionInput.text
+            projectName,
+            projectDescription
         );
 
         if (result.success)
@@ -296,6 +315,7 @@ public class ProjectsUI : MonoBehaviour
             createProjectPanel.SetActive(false);
             projectNameInput.text = "";
             projectDescriptionInput.text = "";
+            createProjectMessage.text = "Проект создан";
             LoadProjects();
         }
         else
@@ -304,10 +324,24 @@ public class ProjectsUI : MonoBehaviour
         }
     }
 
+    bool HasProjectWithName(string projectName)
+    {
+        foreach (var project in allProjects)
+        {
+            if (project.CreatedBy == db.CurrentUser.Id &&
+                string.Equals(project.Name.Trim(), projectName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     void SubscribeButtons()
     {
         addProjectButton.onClick.RemoveAllListeners();
-        addProjectButton.onClick.AddListener(() => createProjectPanel.SetActive(true));
+        addProjectButton.onClick.AddListener(ShowCreateProjectPanel);
 
         logoutButton.onClick.RemoveAllListeners();
         logoutButton.onClick.AddListener(OnLogout);
@@ -316,13 +350,25 @@ public class ProjectsUI : MonoBehaviour
         confirmCreateButton.onClick.AddListener(OnCreateProject);
 
         cancelCreateButton.onClick.RemoveAllListeners();
-        cancelCreateButton.onClick.AddListener(() => createProjectPanel.SetActive(false));
+        cancelCreateButton.onClick.AddListener(HideCreateProjectPanel);
 
         confirmDeleteButton.onClick.RemoveAllListeners();
         confirmDeleteButton.onClick.AddListener(ConfirmDelete);
 
         cancelDeleteButton.onClick.RemoveAllListeners();
         cancelDeleteButton.onClick.AddListener(() => deleteConfirmPanel.SetActive(false));
+    }
+
+    void ShowCreateProjectPanel()
+    {
+        createProjectMessage.text = "";
+        createProjectPanel.SetActive(true);
+    }
+
+    void HideCreateProjectPanel()
+    {
+        createProjectMessage.text = "";
+        createProjectPanel.SetActive(false);
     }
 
     public void OnLogout()

@@ -37,7 +37,7 @@ public class ProjectButtonUI : MonoBehaviour
             unarchiveButton.onClick.AddListener(() => OnUnarchive?.Invoke(currentProject));
     }
 
-    public void SetData(Project project, bool isAdmin)
+    public void SetData(Project project, bool isAdmin, bool canDelete)
     {
         currentProject = project;
 
@@ -78,5 +78,8 @@ public class ProjectButtonUI : MonoBehaviour
                 unarchiveButton.gameObject.SetActive(false);
             }
         }
+
+        if (deleteButton != null)
+            deleteButton.gameObject.SetActive(canDelete);
     }
 }
