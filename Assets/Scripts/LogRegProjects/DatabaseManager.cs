@@ -160,6 +160,50 @@ BEGIN
     );
 END;
 
+IF OBJECT_ID('dbo.CatalogProducts', 'U') IS NOT NULL
+BEGIN
+    IF EXISTS
+    (
+        SELECT 1
+        FROM sys.columns
+        WHERE object_id = OBJECT_ID('dbo.CatalogProducts')
+          AND name = 'Name'
+          AND max_length > 0
+          AND max_length < 1000
+    )
+    BEGIN
+        ALTER TABLE dbo.CatalogProducts
+        ALTER COLUMN Name NVARCHAR(500) NOT NULL;
+    END;
+
+    IF EXISTS
+    (
+        SELECT 1
+        FROM sys.columns
+        WHERE object_id = OBJECT_ID('dbo.CatalogProducts')
+          AND name = 'Description'
+          AND max_length <> -1
+    )
+    BEGIN
+        ALTER TABLE dbo.CatalogProducts
+        ALTER COLUMN Description NVARCHAR(MAX) NOT NULL;
+    END;
+
+    IF EXISTS
+    (
+        SELECT 1
+        FROM sys.columns
+        WHERE object_id = OBJECT_ID('dbo.CatalogProducts')
+          AND name = 'ImagePath'
+          AND max_length > 0
+          AND max_length < 1000
+    )
+    BEGIN
+        ALTER TABLE dbo.CatalogProducts
+        ALTER COLUMN ImagePath NVARCHAR(500) NULL;
+    END;
+END;
+
 IF OBJECT_ID('dbo.CatalogProductFiles', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.CatalogProductFiles
@@ -365,6 +409,8 @@ VALUES (@rootId, @name, 0)", conn);
 
     public async Task<int> CreateProductAsync(int childCategoryId)
     {
+        await EnsureCatalogSchemaAsync();
+
         using var conn = new SqlConnection(connectionString);
         await conn.OpenAsync();
 
@@ -409,6 +455,8 @@ VALUES (@childId, '', '', NULL, 0)", conn);
 
     public async Task UpdateProductAsync(CatalogProduct product)
     {
+        await EnsureCatalogSchemaAsync();
+
         using var conn = new SqlConnection(connectionString);
         await conn.OpenAsync();
 

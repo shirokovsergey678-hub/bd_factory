@@ -11,6 +11,7 @@ public class HierarchyPanelResizer : MonoBehaviour, IBeginDragHandler, IDragHand
     [SerializeField] private RectTransform leftPanel;
     [SerializeField] private RectTransform rightPanel;
     [SerializeField] private RectTransform handleRect;
+    [SerializeField] private CatalogMainPanelUI mainPanelUI;
     [SerializeField] private Texture2D resizeCursorTexture;
     [SerializeField] private Vector2 resizeCursorHotspot = new Vector2(16f, 16f);
     [SerializeField] private float minWidth = 220f;
@@ -100,6 +101,9 @@ public class HierarchyPanelResizer : MonoBehaviour, IBeginDragHandler, IDragHand
 
         if (handleRect == null)
             handleRect = transform as RectTransform;
+
+        if (mainPanelUI == null)
+            mainPanelUI = GetComponentInParent<CatalogMainPanelUI>();
     }
 
     void ApplyCurrentWidth()
@@ -124,6 +128,10 @@ public class HierarchyPanelResizer : MonoBehaviour, IBeginDragHandler, IDragHand
         handleRect.anchorMax = new Vector2(0f, 1f);
         handleRect.pivot = new Vector2(0.5f, 0.5f);
         handleRect.anchoredPosition = new Vector2(width + panelGap * 0.5f, 0f);
+
+        Canvas.ForceUpdateCanvases();
+        if (mainPanelUI != null)
+            mainPanelUI.RefreshUserDisplayLayouts();
     }
 
     float GetEffectiveMaxWidth()
