@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -134,8 +134,8 @@ public class CatalogMainPanelUI : MonoBehaviour
         if (modalRoot == null)
             modalRoot = transform.Find("ModalRoot") as RectTransform;
 
-        if (leftAddRootOriginal == null && leftContent != null)
-            leftAddRootOriginal = leftContent.Find("Button_Добавить раздел")?.GetComponent<Button>();
+        if (leftContent != null && !IsValidLeftAddRootButton(leftAddRootOriginal))
+            leftAddRootOriginal = FindLeftAddRootOriginal();
 
         if (leftRootOriginal == null && leftContent != null)
             leftRootOriginal = leftContent.Find("Root_12") as RectTransform;
@@ -157,11 +157,55 @@ public class CatalogMainPanelUI : MonoBehaviour
             && rightSectionOriginal != null;
     }
 
+    bool IsValidLeftAddRootButton(Button button)
+    {
+        if (button == null || leftContent == null)
+            return false;
+
+        Transform buttonTransform = button.transform;
+        if (buttonTransform.parent != leftContent)
+            return false;
+
+        string objectName = buttonTransform.name;
+        return objectName == "Button_Добавить раздел" || objectName.Contains("Добавить раздел");
+    }
+
+    Button FindLeftAddRootOriginal()
+    {
+        if (leftContent == null)
+            return null;
+
+        Transform exact = leftContent.Find("Button_Добавить раздел");
+        if (exact != null)
+            return exact.GetComponent<Button>();
+
+        for (int i = 0; i < leftContent.childCount; i++)
+        {
+            Transform child = leftContent.GetChild(i);
+            if (child == null || child == leftRootOriginal)
+                continue;
+
+            Button button = child.GetComponent<Button>();
+            if (button != null && child.name.Contains("Добавить раздел"))
+                return button;
+        }
+
+        for (int i = 0; i < leftContent.childCount; i++)
+        {
+            Transform child = leftContent.GetChild(i);
+            if (child == null || child == leftRootOriginal)
+                continue;
+
+            Button button = child.GetComponent<Button>();
+            if (button != null)
+                return button;
+        }
+
+        return null;
+    }
+
     void PrepareOriginalsForRuntime()
     {
-        if (leftAddRootOriginal != null)
-            leftAddRootOriginal.gameObject.SetActive(false);
-
         if (leftRootOriginal != null)
             leftRootOriginal.gameObject.SetActive(false);
 
@@ -173,17 +217,20 @@ public class CatalogMainPanelUI : MonoBehaviour
     {
         ClearDynamicChildren(leftContent, leftAddRootOriginal?.transform as RectTransform, leftRootOriginal);
 
-        if (db.IsAdmin)
+        if (leftAddRootOriginal != null)
         {
-            Button addRootButton = CloneTemplate(leftAddRootOriginal, leftContent, "Button_Добавить раздел");
-            BindButton(addRootButton, TextAddRoot, () =>
+            leftAddRootOriginal.gameObject.SetActive(db.IsAdmin);
+            if (db.IsAdmin)
             {
-                ShowPrompt(TextNewRoot, async name =>
+                BindButton(leftAddRootOriginal, TextAddRoot, () =>
                 {
-                    await db.CreateCatalogRootAsync(name);
-                    await RefreshAsync();
+                    ShowPrompt(TextNewRoot, async name =>
+                    {
+                        await db.CreateCatalogRootAsync(name);
+                        await RefreshAsync();
+                    });
                 });
-            });
+            }
         }
 
         foreach (CatalogRootCategory root in roots)
@@ -203,7 +250,9 @@ public class CatalogMainPanelUI : MonoBehaviour
             if (addChildTemplate != null)
                 addChildTemplate.gameObject.SetActive(false);
 
-            BindButton(FindButton(rootClone, "Header/Button_Expand"), expandedRoots[root.Id] ? "v" : ">", () =>
+            Button expandButton = FindButton(rootClone, "Header/Button_Expand");
+            SetExpandButtonState(expandButton, expandedRoots[root.Id]);
+            BindButton(expandButton, null, () =>
             {
                 expandedRoots[root.Id] = !expandedRoots[root.Id];
                 _ = RefreshAsync();
@@ -440,15 +489,16 @@ public class CatalogMainPanelUI : MonoBehaviour
         }
 
         RectTransform fileList = FindRect(card, "FilesSection/FileList");
-        TMP_Text emptyFilesText = FindText(card, "FilesSection/EmptyFilesLabel");
+        RectTransform emptyFilesLabel = FindRect(card, "FilesSection/EmptyFilesLabel");
+        TMP_Text emptyFilesText = FindText(card, "FilesSection/EmptyFilesLabel/Text") ?? FindText(card, "FilesSection/EmptyFilesLabel");
         if (fileList != null)
             ClearDynamicChildren(fileList, fileTemplate);
 
         bool hasFiles = product.Files.Count > 0;
-        if (emptyFilesText != null)
+        if (emptyFilesLabel != null)
         {
-            emptyFilesText.gameObject.SetActive(!hasFiles);
-            if (!hasFiles)
+            emptyFilesLabel.gameObject.SetActive(!hasFiles);
+            if (!hasFiles && emptyFilesText != null)
                 SetText(emptyFilesText, TextNoFiles);
         }
 
@@ -637,10 +687,7 @@ public class CatalogMainPanelUI : MonoBehaviour
         if (input == null)
             return;
 
-        input.customCaretColor = true;
-        input.caretColor = Color.white;
-        input.selectionColor = new Color(0.16f, 0.47f, 0.78f, 0.45f);
-        input.caretWidth = 2;
+        ApplyInputVisuals(input);
         input.scrollSensitivity = 0f;
         input.lineType = multiLine ? TMP_InputField.LineType.MultiLineNewline : TMP_InputField.LineType.SingleLine;
         input.richText = false;
@@ -732,6 +779,21 @@ public class CatalogMainPanelUI : MonoBehaviour
         TMP_Text text = button != null ? button.GetComponentInChildren<TMP_Text>(true) : null;
         if (text != null)
             text.text = label;
+    }
+
+    void SetExpandButtonState(Button button, bool expanded)
+    {
+        if (button == null)
+            return;
+
+        Transform arrow = button.transform.Find("collapseArrowImage");
+        if (arrow != null)
+        {
+            arrow.localRotation = Quaternion.Euler(0f, 0f, expanded ? -90f : 0f);
+            return;
+        }
+
+        SetButtonLabel(button, expanded ? "v" : ">");
     }
 
     void SetText(TMP_Text text, string value)
@@ -972,10 +1034,7 @@ public class CatalogMainPanelUI : MonoBehaviour
         layout.preferredHeight = height;
 
         TMP_InputField input = root.gameObject.AddComponent<TMP_InputField>();
-        input.customCaretColor = true;
-        input.caretColor = Color.white;
-        input.selectionColor = new Color(0.16f, 0.47f, 0.78f, 0.45f);
-        input.caretWidth = 2;
+        ApplyInputVisuals(input);
         input.scrollSensitivity = 0f;
         input.lineType = multiLine ? TMP_InputField.LineType.MultiLineNewline : TMP_InputField.LineType.SingleLine;
         input.richText = false;
@@ -1013,6 +1072,17 @@ public class CatalogMainPanelUI : MonoBehaviour
         EnsureInputScrollForwarder(input);
 
         return input;
+    }
+
+    void ApplyInputVisuals(TMP_InputField input)
+    {
+        if (input == null)
+            return;
+
+        input.customCaretColor = true;
+        input.caretColor = Color.black;
+        input.selectionColor = new Color(0.16f, 0.47f, 0.78f, 0.45f);
+        input.caretWidth = 2;
     }
 
     void EnsureInputScrollForwarder(TMP_InputField input)

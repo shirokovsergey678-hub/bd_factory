@@ -8,6 +8,7 @@ public static class CatalogMainPanelSceneSetup
 {
     private const string ScenePath = "Assets/Scenes/LogReg.unity";
     private const string ResizeCursorTexturePath = "Assets/Materials/cursor_resize_horizontal.png";
+    private const string CollapseArrowTexturePath = "Assets/Materials/collapse_arrow.png";
 
     [MenuItem("Tools/Catalog/Setup MainPanel Scene")]
     public static void SetupFromMenu()
@@ -82,15 +83,18 @@ public static class CatalogMainPanelSceneSetup
 
     private static Button EnsureLeftAddRootOriginal(RectTransform parent)
     {
-        Transform existing = parent.Find("Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎР‚Р В°Р В·Р Т‘Р ВµР В»");
+        Transform existing = parent.Find("Button_Добавить раздел");
+        if (existing == null)
+            existing = parent.Find("Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎР‚Р В°Р В·Р Т‘Р ВµР В»");
         if (existing != null)
         {
+            existing.name = "Button_Добавить раздел";
             Button existingButton = existing.GetComponent<Button>();
             NormalizeButtonLabel(existingButton, false);
             return existingButton;
         }
 
-        Button button = CreateButton(parent, "Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎР‚Р В°Р В·Р Т‘Р ВµР В»", "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎР‚Р В°Р В·Р Т‘Р ВµР В»", Color.white, Color.black, 38f, FontStyles.Normal);
+        Button button = CreateButton(parent, "Button_Добавить раздел", "Добавить раздел", Color.white, Color.black, 38f, FontStyles.Normal);
         AddOutline(button.GetComponent<RectTransform>(), Color.black);
         return button;
     }
@@ -115,7 +119,7 @@ public static class CatalogMainPanelSceneSetup
         HorizontalLayoutGroup headerLayout = EnsureHorizontalLayout(header, 4, new RectOffset(0, 0, 0, 0));
         headerLayout.childForceExpandWidth = false;
 
-        CreateButton(header, "Button_Expand", "v", new Color(0.82f, 0.82f, 0.82f, 1f), Color.black, 22f, FontStyles.Normal, 22f);
+        CreateExpandButton(header);
         CreateButton(header, "Button_Name", "Р В Р В°Р В·Р Т‘Р ВµР В»", Color.clear, Color.black, 26f, FontStyles.Underline, -1f, TextAlignmentOptions.MidlineLeft);
         CreateButton(header, "Button_Delete", "x", new Color(0.55f, 0.17f, 0.17f, 1f), Color.white, 22f, FontStyles.Normal, 22f);
 
@@ -422,11 +426,12 @@ public static class CatalogMainPanelSceneSetup
     }
     private static void NormalizeLeftRootOriginal(RectTransform root)
     {
-        NormalizeButtonLabel(root.Find("Header/Button_Expand")?.GetComponent<Button>(), true);
+        NormalizeExpandButton(root.Find("Header/Button_Expand")?.GetComponent<Button>());
         NormalizeButtonLabel(root.Find("Header/Button_Name")?.GetComponent<Button>(), false);
         NormalizeButtonLabel(root.Find("Header/Button_Delete")?.GetComponent<Button>(), true);
-        NormalizeButtonLabel(root.Find("Rows/ChildRow/Button_Name")?.GetComponent<Button>(), false);
+        NormalizeButtonTargetGraphic(root.Find("Header/Button_Name")?.GetComponent<Button>(), null);
         NormalizeButtonLabel(root.Find("Rows/ChildRow/Button_Delete")?.GetComponent<Button>(), true);
+        NormalizeButtonTargetGraphic(root.Find("Rows/ChildRow/Button_Name")?.GetComponent<Button>(), null);
         NormalizeButtonLabel(root.Find("Rows/AddChildRow/Button_Add")?.GetComponent<Button>(), true);
     }
 
@@ -600,6 +605,73 @@ public static class CatalogMainPanelSceneSetup
         text.overflowMode = allowWrap ? TextOverflowModes.Overflow : TextOverflowModes.Ellipsis;
     }
 
+    private static void NormalizeButtonTargetGraphic(Button button, Graphic graphic)
+    {
+        if (button == null)
+            return;
+
+        button.targetGraphic = graphic;
+    }
+
+    private static void NormalizeExpandButton(Button button)
+    {
+        if (button == null)
+            return;
+
+        RectTransform root = button.transform as RectTransform;
+        if (root == null)
+            return;
+
+        LayoutElement layout = EnsureLayoutElement(root);
+        layout.preferredWidth = 22f;
+        layout.preferredHeight = 22f;
+
+        TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+        if (label != null)
+            label.gameObject.SetActive(false);
+
+        Transform existingArrow = root.Find("collapseArrowImage");
+        RectTransform arrowRect;
+        Image arrowImage;
+        if (existingArrow != null)
+        {
+            arrowRect = existingArrow as RectTransform;
+            arrowImage = existingArrow.GetComponent<Image>();
+        }
+        else
+        {
+            GameObject arrowObject = new GameObject("collapseArrowImage", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            arrowObject.transform.SetParent(root, false);
+            arrowRect = arrowObject.GetComponent<RectTransform>();
+            arrowImage = arrowObject.GetComponent<Image>();
+        }
+
+        Stretch(arrowRect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        arrowRect.sizeDelta = new Vector2(12.06f, 12.06f);
+        arrowRect.localScale = Vector3.one;
+        arrowRect.localRotation = Quaternion.Euler(0f, 0f, -90f);
+
+        if (arrowImage != null)
+        {
+            arrowImage.sprite = LoadCollapseArrowSprite();
+            arrowImage.color = Color.white;
+            arrowImage.preserveAspect = true;
+            arrowImage.raycastTarget = false;
+        }
+    }
+
+    private static Button CreateExpandButton(RectTransform parent)
+    {
+        RectTransform root = CreatePanel(parent, "Button_Expand", new Color(0.82f, 0.82f, 0.82f, 1f));
+        LayoutElement layout = EnsureLayoutElement(root);
+        layout.preferredWidth = 22f;
+        layout.preferredHeight = 22f;
+
+        Button button = root.gameObject.AddComponent<Button>();
+        NormalizeExpandButton(button);
+        return button;
+    }
+
     private static string TextAddImageMultiline()
     {
         return "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ\nР С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р Вµ\nР С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљР В°";
@@ -756,6 +828,22 @@ public static class CatalogMainPanelSceneSetup
         }
 
         return rect;
+    }
+
+    private static Sprite LoadCollapseArrowSprite()
+    {
+        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(CollapseArrowTexturePath);
+        if (sprite != null)
+            return sprite;
+
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(CollapseArrowTexturePath);
+        for (int i = 0; i < assets.Length; i++)
+        {
+            if (assets[i] is Sprite foundSprite)
+                return foundSprite;
+        }
+
+        return null;
     }
 
     private static RectTransform EnsurePanel(RectTransform parent, string name, bool addImage, Color color)
