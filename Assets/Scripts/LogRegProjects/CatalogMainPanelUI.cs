@@ -16,6 +16,12 @@ public class CatalogMainPanelUI : MonoBehaviour
         public float MinHeight;
     }
 
+    struct AdminInputBinding
+    {
+        public TMP_InputField Input;
+        public float MinHeight;
+    }
+
     private const float ProductNameDisplayMinHeight = 42f;
     private const float ProductDescriptionDisplayMinHeight = 110f;
 
@@ -63,6 +69,7 @@ public class CatalogMainPanelUI : MonoBehaviour
     private readonly Dictionary<int, bool> expandedRoots = new();
     private readonly Dictionary<int, RectTransform> childSectionAnchors = new();
     private readonly List<DisplayTextBinding> displayTextBindings = new();
+    private readonly List<AdminInputBinding> adminInputBindings = new();
     private int selectedRootId = -1;
 
     void Awake()
@@ -280,6 +287,7 @@ public class CatalogMainPanelUI : MonoBehaviour
         ClearDynamicChildren(rightContent, rightSectionOriginal);
         childSectionAnchors.Clear();
         displayTextBindings.Clear();
+        adminInputBindings.Clear();
 
         if (selectedRootId <= 0)
         {
@@ -390,6 +398,8 @@ public class CatalogMainPanelUI : MonoBehaviour
 
             ConfigureInput(nameInput, TextProductName, product.Name, true);
             ConfigureInput(descriptionInput, TextProductDescription, product.Description, true);
+            RegisterAdminInputLayout(nameInput, ProductNameDisplayMinHeight);
+            RegisterAdminInputLayout(descriptionInput, ProductDescriptionDisplayMinHeight);
         }
         else
         {
@@ -480,7 +490,10 @@ public class CatalogMainPanelUI : MonoBehaviour
     void BuildFileRow(RectTransform parent, RectTransform fileTemplate, int childId, CatalogProductFile file)
     {
         RectTransform row = CloneTemplate(fileTemplate, parent, $"FileRow_{file.Id}");
-        SetText(FindText(row, "FileName"), file.FileName);
+        TMP_Text fileNameText = FindText(row, "FileName/Text") ?? FindText(row, "FileName");
+        string displayFileName = string.IsNullOrWhiteSpace(file.FileName) ? Path.GetFileName(file.FilePath) : file.FileName;
+        SetText(fileNameText, displayFileName);
+        NormalizeRuntimeFileRow(row, fileNameText);
 
         BindButton(FindButton(row, "Button_Путь в проводнике"), TextOpenInExplorer, () =>
         {
@@ -500,6 +513,83 @@ public class CatalogMainPanelUI : MonoBehaviour
                     await BuildRightPanelAsync(childId);
                 });
             }
+        }
+    }
+
+    void NormalizeRuntimeFileRow(RectTransform row, TMP_Text fileNameText)
+    {
+        if (row == null)
+            return;
+
+        if (fileNameText != null)
+        {
+            fileNameText.gameObject.SetActive(true);
+            fileNameText.enabled = true;
+            fileNameText.enableWordWrapping = false;
+            fileNameText.overflowMode = TextOverflowModes.Ellipsis;
+            fileNameText.alignment = TextAlignmentOptions.TopLeft;
+            fileNameText.margin = Vector4.zero;
+            RectTransform textRect = fileNameText.rectTransform;
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+            textRect.anchoredPosition = Vector2.zero;
+            textRect.localScale = Vector3.one;
+            textRect.localRotation = Quaternion.identity;
+        }
+
+        RectTransform fileNameRoot = FindRect(row, "FileName");
+        if (fileNameRoot != null)
+        {
+            LayoutElement fileNameLayout = fileNameRoot.GetComponent<LayoutElement>();
+            if (fileNameLayout == null)
+                fileNameLayout = fileNameRoot.gameObject.AddComponent<LayoutElement>();
+
+            fileNameLayout.minWidth = 220f;
+            fileNameLayout.preferredWidth = 0f;
+            fileNameLayout.flexibleWidth = 4f;
+        }
+
+        Button openButton = FindButton(row, "Button_РџСѓС‚СЊ РІ РїСЂРѕРІРѕРґРЅРёРєРµ");
+        if (openButton != null)
+        {
+            LayoutElement openLayout = openButton.GetComponent<LayoutElement>();
+            if (openLayout == null)
+                openLayout = openButton.gameObject.AddComponent<LayoutElement>();
+
+            openLayout.preferredWidth = 92f;
+            openLayout.flexibleWidth = 0f;
+        }
+
+        Button deleteButton = FindButton(row, "Button_РЈРґР°Р»РёС‚СЊ");
+        if (deleteButton != null)
+        {
+            LayoutElement deleteLayout = deleteButton.GetComponent<LayoutElement>();
+            if (deleteLayout == null)
+                deleteLayout = deleteButton.gameObject.AddComponent<LayoutElement>();
+
+            deleteLayout.preferredWidth = 100f;
+            deleteLayout.flexibleWidth = 0f;
+        }
+
+        RectTransform spacer = FindRect(row, "Spacer");
+        if (spacer != null)
+        {
+            LayoutElement spacerLayout = spacer.GetComponent<LayoutElement>();
+            if (spacerLayout == null)
+                spacerLayout = spacer.gameObject.AddComponent<LayoutElement>();
+
+            spacerLayout.preferredWidth = 0f;
+            spacerLayout.flexibleWidth = 1f;
+            spacer.SetSiblingIndex(Mathf.Max(0, row.childCount - 2));
+        }
+
+        HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
+        if (layout != null)
+        {
+            layout.childControlWidth = true;
+            layout.childForceExpandWidth = false;
         }
     }
 
@@ -551,9 +641,10 @@ public class CatalogMainPanelUI : MonoBehaviour
         input.caretColor = Color.white;
         input.selectionColor = new Color(0.16f, 0.47f, 0.78f, 0.45f);
         input.caretWidth = 2;
-        input.scrollSensitivity = 20f;
+        input.scrollSensitivity = 0f;
         input.lineType = multiLine ? TMP_InputField.LineType.MultiLineNewline : TMP_InputField.LineType.SingleLine;
         input.richText = false;
+        input.verticalScrollbar = null;
         input.text = value ?? string.Empty;
 
         if (input.textComponent != null)
@@ -576,11 +667,11 @@ public class CatalogMainPanelUI : MonoBehaviour
         }
 
         if (input.verticalScrollbar != null)
-        {
-            input.verticalScrollbar.gameObject.SetActive(multiLine);
-            if (!multiLine)
-                input.verticalScrollbar = null;
-        }
+            input.verticalScrollbar = null;
+
+        Transform scrollbar = input.transform.Find("Scrollbar");
+        if (scrollbar != null)
+            scrollbar.gameObject.SetActive(false);
     }
 
     void SetProductImageState(CatalogProduct product, TMP_Text label, Image previewImage)
@@ -701,20 +792,83 @@ public class CatalogMainPanelUI : MonoBehaviour
         }
     }
 
-    void OnRectTransformDimensionsChange()
+    void UpdateInputLayout(TMP_InputField input, float minHeight)
     {
-        if (!isActiveAndEnabled || db == null || db.IsAdmin)
+        if (input == null || input.textComponent == null)
             return;
 
+        RectTransform root = input.transform as RectTransform;
+        if (root == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(input.textComponent.rectTransform);
+
+        float contentHeight = input.textComponent.preferredHeight;
+        if (input.placeholder is TMP_Text placeholderText)
+            contentHeight = Mathf.Max(contentHeight, placeholderText.preferredHeight);
+
+        LayoutElement layout = root.GetComponent<LayoutElement>();
+        if (layout == null)
+            layout = root.gameObject.AddComponent<LayoutElement>();
+
+        float preferredHeight = Mathf.Max(minHeight, contentHeight + 10f);
+        layout.minHeight = minHeight;
+        layout.preferredHeight = preferredHeight;
+
+        RectTransform infoArea = root.parent as RectTransform;
+        if (infoArea != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(infoArea);
+
+        RectTransform topRow = infoArea != null ? infoArea.parent as RectTransform : null;
+        if (topRow != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(topRow);
+
+        RectTransform card = topRow != null ? topRow.parent as RectTransform : null;
+        if (card != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(card);
+    }
+
+    void RegisterAdminInputLayout(TMP_InputField input, float minHeight)
+    {
+        if (input == null)
+            return;
+
+        input.onValueChanged.AddListener(_ => UpdateInputLayout(input, minHeight));
+
+        adminInputBindings.Add(new AdminInputBinding
+        {
+            Input = input,
+            MinHeight = minHeight
+        });
+
+        UpdateInputLayout(input, minHeight);
+    }
+
+    void RefreshAdminInputLayouts()
+    {
+        for (int i = 0; i < adminInputBindings.Count; i++)
+        {
+            AdminInputBinding binding = adminInputBindings[i];
+            if (binding.Input == null || !binding.Input.gameObject.activeInHierarchy)
+                continue;
+
+            UpdateInputLayout(binding.Input, binding.MinHeight);
+        }
+    }
+
+    void OnRectTransformDimensionsChange()
+    {
         RefreshUserDisplayLayouts();
     }
 
     public void RefreshUserDisplayLayouts()
     {
-        if (!isActiveAndEnabled || db == null || db.IsAdmin)
+        if (!isActiveAndEnabled || db == null)
             return;
 
         Canvas.ForceUpdateCanvases();
+        RefreshAdminInputLayouts();
         RefreshDisplayTextLayouts();
         if (rightScroll != null && rightScroll.viewport != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(rightScroll.viewport);
@@ -812,6 +966,7 @@ public class CatalogMainPanelUI : MonoBehaviour
     {
         RectTransform root = CreatePanel("InputField", parent, new Color(0.42f, 0.42f, 0.42f, 1f));
         LayoutElement layout = root.gameObject.AddComponent<LayoutElement>();
+        layout.minHeight = height;
         layout.preferredHeight = height;
 
         TMP_InputField input = root.gameObject.AddComponent<TMP_InputField>();
@@ -819,13 +974,12 @@ public class CatalogMainPanelUI : MonoBehaviour
         input.caretColor = Color.white;
         input.selectionColor = new Color(0.16f, 0.47f, 0.78f, 0.45f);
         input.caretWidth = 2;
-        input.scrollSensitivity = 20f;
+        input.scrollSensitivity = 0f;
         input.lineType = multiLine ? TMP_InputField.LineType.MultiLineNewline : TMP_InputField.LineType.SingleLine;
         input.richText = false;
 
         RectTransform viewport = CreatePanel("TextArea", root, Color.clear);
-        float rightPadding = multiLine ? 24f : 8f;
-        Stretch(viewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 5f), new Vector2(-rightPadding, -5f));
+        Stretch(viewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 5f), new Vector2(-8f, -5f));
         viewport.gameObject.AddComponent<RectMask2D>();
         input.textViewport = viewport;
 
@@ -855,35 +1009,7 @@ public class CatalogMainPanelUI : MonoBehaviour
 
         input.text = value ?? string.Empty;
 
-        AttachInputScrollbar(root, input, multiLine);
-
         return input;
-    }
-
-    void AttachInputScrollbar(RectTransform inputRoot, TMP_InputField input, bool enabled)
-    {
-        RectTransform scrollbarRoot = CreatePanel("Scrollbar", inputRoot, Color.clear);
-        Stretch(scrollbarRoot, new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-14f, 4f), new Vector2(-4f, -4f));
-        scrollbarRoot.pivot = new Vector2(1f, 0.5f);
-        scrollbarRoot.gameObject.SetActive(enabled);
-
-        Image scrollbarImage = scrollbarRoot.GetComponent<Image>();
-        if (scrollbarImage != null)
-            scrollbarImage.color = new Color(0f, 0f, 0f, 0f);
-
-        Scrollbar scrollbar = scrollbarRoot.gameObject.AddComponent<Scrollbar>();
-        scrollbar.direction = Scrollbar.Direction.BottomToTop;
-
-        RectTransform slidingArea = CreatePanel("Sliding Area", scrollbarRoot, Color.clear);
-        Stretch(slidingArea, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(2f, 2f), new Vector2(-2f, -2f));
-
-        RectTransform handle = CreatePanel("Handle", slidingArea, Color.clear);
-        Stretch(handle, new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, new Vector2(0f, 16f));
-
-        scrollbar.handleRect = handle;
-        scrollbar.targetGraphic = handle.GetComponent<Image>();
-        scrollbar.size = 0.25f;
-        input.verticalScrollbar = enabled ? scrollbar : null;
     }
 
     RectTransform CreatePanel(string name, Transform parent, Color color)

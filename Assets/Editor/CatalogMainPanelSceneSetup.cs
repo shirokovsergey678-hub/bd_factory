@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -79,7 +79,7 @@ public static class CatalogMainPanelSceneSetup
 
     private static Button EnsureLeftAddRootOriginal(RectTransform parent)
     {
-        Transform existing = parent.Find("Button_Р”РѕР±Р°РІРёС‚СЊ СЂР°Р·РґРµР»");
+        Transform existing = parent.Find("Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎР‚Р В°Р В·Р Т‘Р ВµР В»");
         if (existing != null)
         {
             Button existingButton = existing.GetComponent<Button>();
@@ -87,7 +87,7 @@ public static class CatalogMainPanelSceneSetup
             return existingButton;
         }
 
-        Button button = CreateButton(parent, "Button_Р”РѕР±Р°РІРёС‚СЊ СЂР°Р·РґРµР»", "Р”РѕР±Р°РІРёС‚СЊ СЂР°Р·РґРµР»", Color.white, Color.black, 38f, FontStyles.Normal);
+        Button button = CreateButton(parent, "Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎР‚Р В°Р В·Р Т‘Р ВµР В»", "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎР‚Р В°Р В·Р Т‘Р ВµР В»", Color.white, Color.black, 38f, FontStyles.Normal);
         AddOutline(button.GetComponent<RectTransform>(), Color.black);
         return button;
     }
@@ -113,7 +113,7 @@ public static class CatalogMainPanelSceneSetup
         headerLayout.childForceExpandWidth = false;
 
         CreateButton(header, "Button_Expand", "v", new Color(0.82f, 0.82f, 0.82f, 1f), Color.black, 22f, FontStyles.Normal, 22f);
-        CreateButton(header, "Button_Name", "Р Р°Р·РґРµР»", Color.clear, Color.black, 26f, FontStyles.Underline, -1f, TextAlignmentOptions.MidlineLeft);
+        CreateButton(header, "Button_Name", "Р В Р В°Р В·Р Т‘Р ВµР В»", Color.clear, Color.black, 26f, FontStyles.Underline, -1f, TextAlignmentOptions.MidlineLeft);
         CreateButton(header, "Button_Delete", "x", new Color(0.55f, 0.17f, 0.17f, 1f), Color.white, 22f, FontStyles.Normal, 22f);
 
         RectTransform rows = CreatePanel(card, "Rows", Color.clear);
@@ -126,7 +126,7 @@ public static class CatalogMainPanelSceneSetup
         EnsureLayoutElement(childRow).preferredHeight = 28f;
         HorizontalLayoutGroup childLayout = EnsureHorizontalLayout(childRow, 4, new RectOffset(24, 0, 0, 0));
         childLayout.childForceExpandWidth = false;
-        CreateButton(childRow, "Button_Name", "РџРѕРґСЂР°Р·РґРµР»", Color.clear, Color.black, 26f, FontStyles.Underline, -1f, TextAlignmentOptions.MidlineLeft);
+        CreateButton(childRow, "Button_Name", "Р СџР С•Р Т‘РЎР‚Р В°Р В·Р Т‘Р ВµР В»", Color.clear, Color.black, 26f, FontStyles.Underline, -1f, TextAlignmentOptions.MidlineLeft);
         CreateButton(childRow, "Button_Delete", "x", new Color(0.55f, 0.17f, 0.17f, 1f), Color.white, 22f, FontStyles.Normal, 22f);
 
         RectTransform addChildRow = CreatePanel(rows, "AddChildRow", Color.clear);
@@ -154,7 +154,7 @@ public static class CatalogMainPanelSceneSetup
 
         RectTransform titleBar = CreatePanel(section, "TitleBar", ParseColor("0A78C2"));
         EnsureLayoutElement(titleBar).preferredHeight = 28f;
-        TMP_Text titleText = CreateText(titleBar, "TitleText", "РќР°Р·РІР°РЅРёРµ РїРѕРґСЂР°Р·РґРµР»Р°", 17, TextAlignmentOptions.MidlineLeft, Color.white, FontStyles.Bold);
+        TMP_Text titleText = CreateText(titleBar, "TitleText", "Р СњР В°Р В·Р Р†Р В°Р Р…Р С‘Р Вµ Р С—Р С•Р Т‘РЎР‚Р В°Р В·Р Т‘Р ВµР В»Р В°", 17, TextAlignmentOptions.MidlineLeft, Color.white, FontStyles.Bold);
         titleText.margin = new Vector4(12f, 0f, 12f, 0f);
 
         RectTransform products = CreatePanel(section, "Products", Color.clear);
@@ -165,8 +165,8 @@ public static class CatalogMainPanelSceneSetup
 
         EnsureProductOriginal(products);
 
-        CreateButton(section, "Button_Р”РѕР±Р°РІРёС‚СЊ РїСЂРѕРґСѓРєС‚", "Р”РѕР±Р°РІРёС‚СЊ РїСЂРѕРґСѓРєС‚", Color.white, Color.black, 38f, FontStyles.Normal);
-        AddOutline(section.Find("Button_Р”РѕР±Р°РІРёС‚СЊ РїСЂРѕРґСѓРєС‚") as RectTransform, Color.black);
+        CreateButton(section, "Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљ", "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљ", Color.white, Color.black, 38f, FontStyles.Normal);
+        AddOutline(section.Find("Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљ") as RectTransform, Color.black);
 
         return section;
     }
@@ -219,10 +219,10 @@ public static class CatalogMainPanelSceneSetup
         infoAreaFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         infoAreaFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        CreateInputField(infoArea, "NameInput", "РќР°Р·РІР°РЅРёРµ РїСЂРѕРґСѓРєС‚Р°", 42f, true);
-        CreateInputField(infoArea, "DescriptionInput", "РћРїРёСЃР°РЅРёРµ РїСЂРѕРґСѓРєС‚Р°", 110f, true);
-        TMP_Text nameText = CreateDisplayText(infoArea, "NameText", "РќР°Р·РІР°РЅРёРµ РїСЂРѕРґСѓРєС‚Р°", 18, ParseColor("0A78C2"), FontStyles.Bold, 42f);
-        TMP_Text descriptionText = CreateDisplayText(infoArea, "DescriptionText", "РћРїРёСЃР°РЅРёРµ РїСЂРѕРґСѓРєС‚Р°", 15, Color.black, FontStyles.Normal, 110f);
+        CreateInputField(infoArea, "NameInput", "Р СњР В°Р В·Р Р†Р В°Р Р…Р С‘Р Вµ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљР В°", 42f, true);
+        CreateInputField(infoArea, "DescriptionInput", "Р С›Р С—Р С‘РЎРѓР В°Р Р…Р С‘Р Вµ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљР В°", 110f, true);
+        TMP_Text nameText = CreateDisplayText(infoArea, "NameText", "Р СњР В°Р В·Р Р†Р В°Р Р…Р С‘Р Вµ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљР В°", 18, ParseColor("0A78C2"), FontStyles.Bold, 42f);
+        TMP_Text descriptionText = CreateDisplayText(infoArea, "DescriptionText", "Р С›Р С—Р С‘РЎРѓР В°Р Р…Р С‘Р Вµ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљР В°", 15, Color.black, FontStyles.Normal, 110f);
         nameText.gameObject.SetActive(false);
         descriptionText.gameObject.SetActive(false);
 
@@ -239,10 +239,10 @@ public static class CatalogMainPanelSceneSetup
         LayoutElement labelLayout = EnsureLayoutElement(headerLabel);
         labelLayout.flexibleWidth = 1f;
         labelLayout.preferredHeight = 30f;
-        TMP_Text headerText = CreateText(headerLabel, "Text", "РўРµС…РЅРёС‡РµСЃРєРѕРµ РѕРїРёСЃР°РЅРёРµ", 14, TextAlignmentOptions.MidlineLeft, Color.white, FontStyles.Normal);
+        TMP_Text headerText = CreateText(headerLabel, "Text", "Р СћР ВµРЎвЂ¦Р Р…Р С‘РЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ Р С•Р С—Р С‘РЎРѓР В°Р Р…Р С‘Р Вµ", 14, TextAlignmentOptions.MidlineLeft, Color.white, FontStyles.Normal);
         headerText.margin = new Vector4(4f, 0f, 4f, 0f);
 
-        CreateButton(filesHeader, "Button_Р”РѕР±Р°РІРёС‚СЊ С„Р°Р№Р»", "Р”РѕР±Р°РІРёС‚СЊ С„Р°Р№Р»", ParseColor("0A78C2"), Color.white, 30f, FontStyles.Normal, 130f);
+        CreateButton(filesHeader, "Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎвЂћР В°Р в„–Р В»", "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎвЂћР В°Р в„–Р В»", ParseColor("0A78C2"), Color.white, 30f, FontStyles.Normal, 130f);
 
         RectTransform fileList = CreatePanel(filesSection, "FileList", Color.clear);
         EnsureVerticalLayout(fileList, 4, new RectOffset(0, 0, 0, 0));
@@ -251,15 +251,15 @@ public static class CatalogMainPanelSceneSetup
         fileListFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
         EnsureFileRowOriginal(fileList);
-        CreateDisplayText(filesSection, "EmptyFilesLabel", "Р¤Р°Р№Р»С‹ РЅРµ РґРѕР±Р°РІР»РµРЅС‹", 13, new Color(0.85f, 0.85f, 0.85f, 1f), FontStyles.Normal, 18f);
+        CreateDisplayText(filesSection, "EmptyFilesLabel", "Р В¤Р В°Р в„–Р В»РЎвЂ№ Р Р…Р Вµ Р Т‘Р С•Р В±Р В°Р Р†Р В»Р ВµР Р…РЎвЂ№", 13, new Color(0.85f, 0.85f, 0.85f, 1f), FontStyles.Normal, 18f);
 
         RectTransform actionsRow = CreatePanel(card, "ActionsRow", Color.clear);
         EnsureLayoutElement(actionsRow).preferredHeight = 42f;
         HorizontalLayoutGroup actionsLayout = EnsureHorizontalLayout(actionsRow, 2, new RectOffset(0, 0, 0, 0));
         actionsLayout.childForceExpandWidth = true;
 
-        CreateButton(actionsRow, "Button_РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ", "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ", ParseColor("0A78C2"), Color.white, 42f, FontStyles.Normal);
-        CreateButton(actionsRow, "Button_РЈРґР°Р»РёС‚СЊ РїСЂРѕРґСѓРєС‚", "РЈРґР°Р»РёС‚СЊ РїСЂРѕРґСѓРєС‚", new Color(0.15f, 0.08f, 0.08f, 1f), new Color(1f, 0.65f, 0.65f), 42f, FontStyles.Normal);
+        CreateButton(actionsRow, "Button_Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…Р С‘РЎвЂљРЎРЉ Р С‘Р В·Р СР ВµР Р…Р ВµР Р…Р С‘РЎРЏ", "Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…Р С‘РЎвЂљРЎРЉ Р С‘Р В·Р СР ВµР Р…Р ВµР Р…Р С‘РЎРЏ", ParseColor("0A78C2"), Color.white, 42f, FontStyles.Normal);
+        CreateButton(actionsRow, "Button_Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљ", "Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљ", new Color(0.15f, 0.08f, 0.08f, 1f), new Color(1f, 0.65f, 0.65f), 42f, FontStyles.Normal);
 
         return card;
     }
@@ -268,23 +268,155 @@ public static class CatalogMainPanelSceneSetup
     {
         Transform existing = parent.Find("FileRow");
         if (existing != null)
-            return existing as RectTransform;
+        {
+            RectTransform existingRow = existing as RectTransform;
+            NormalizeFileRowOriginal(existingRow);
+            return existingRow;
+        }
 
         RectTransform row = CreatePanel(parent, "FileRow", new Color(0.12f, 0.12f, 0.12f, 1f));
         HorizontalLayoutGroup layout = EnsureHorizontalLayout(row, 6, new RectOffset(8, 8, 6, 6));
-        layout.childControlWidth = false;
+        layout.childControlWidth = true;
         layout.childForceExpandWidth = false;
+        layout.childAlignment = TextAnchor.MiddleLeft;
 
         RectTransform fileName = CreatePanel(row, "FileName", Color.clear);
         LayoutElement fileNameLayout = EnsureLayoutElement(fileName);
-        fileNameLayout.preferredWidth = 260f;
-        CreateText(fileName, "Text", "Р”РѕРєСѓРјРµРЅС‚.pdf", 13, TextAlignmentOptions.MidlineLeft, Color.white, FontStyles.Normal);
+        fileNameLayout.minWidth = 220f;
+        fileNameLayout.preferredWidth = 0f;
+        fileNameLayout.flexibleWidth = 4f;
+        TMP_Text fileNameText = CreateText(fileName, "Text", "Р вЂќР С•Р С”РЎС“Р СР ВµР Р…РЎвЂљ.pdf", 13, TextAlignmentOptions.TopLeft, Color.white, FontStyles.Normal);
+        fileNameText.enableWordWrapping = false;
+        fileNameText.overflowMode = TextOverflowModes.Ellipsis;
+        fileNameText.margin = Vector4.zero;
 
-        CreateButton(row, "Button_РџСѓС‚СЊ РІ РїСЂРѕРІРѕРґРЅРёРєРµ", "РџСѓС‚СЊ РІ РїСЂРѕРІРѕРґРЅРёРєРµ", new Color(0.12f, 0.12f, 0.12f, 1f), new Color(0.96f, 0.89f, 0.55f), 28f, FontStyles.Normal, 130f);
-        CreateButton(row, "Button_РЈРґР°Р»РёС‚СЊ", "РЈРґР°Р»РёС‚СЊ", new Color(0.15f, 0.08f, 0.08f, 1f), new Color(1f, 0.65f, 0.65f), 28f, FontStyles.Normal, 82f);
+        CreateButton(row, "Button_Р СџРЎС“РЎвЂљРЎРЉ Р Р† Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р Р…Р С‘Р С”Р Вµ", "Р СџРЎС“РЎвЂљРЎРЉ Р Р† Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р Р…Р С‘Р С”Р Вµ", new Color(0.12f, 0.12f, 0.12f, 1f), new Color(0.96f, 0.89f, 0.55f), 28f, FontStyles.Normal, 130f);
+
+        RectTransform spacer = CreatePanel(row, "Spacer", Color.clear);
+        LayoutElement spacerLayout = EnsureLayoutElement(spacer);
+        spacerLayout.preferredWidth = 0f;
+        spacerLayout.flexibleWidth = 1f;
+
+        CreateButton(row, "Button_Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ", "Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ", new Color(0.15f, 0.08f, 0.08f, 1f), new Color(1f, 0.65f, 0.65f), 28f, FontStyles.Normal, 82f);
+        NormalizeFileRowOriginal(row);
         return row;
     }
 
+    private static void NormalizeFileRowOriginal(RectTransform row)
+    {
+        if (row == null)
+            return;
+
+        HorizontalLayoutGroup layout = EnsureHorizontalLayout(row, 6, new RectOffset(8, 8, 6, 6));
+        layout.childControlWidth = true;
+        layout.childForceExpandWidth = false;
+        layout.childAlignment = TextAnchor.MiddleLeft;
+
+        RectTransform fileName = row.Find("FileName") as RectTransform;
+        if (fileName != null)
+        {
+            LayoutElement fileNameLayout = EnsureLayoutElement(fileName);
+            fileNameLayout.minWidth = 220f;
+            fileNameLayout.preferredWidth = 0f;
+            fileNameLayout.flexibleWidth = 4f;
+
+            TMP_Text fileNameText = EnsureFileNameTextOnRoot(fileName);
+            if (fileNameText != null)
+            {
+                fileNameText.alignment = TextAlignmentOptions.TopLeft;
+                fileNameText.enableWordWrapping = false;
+                fileNameText.overflowMode = TextOverflowModes.Ellipsis;
+                fileNameText.margin = Vector4.zero;
+            }
+        }
+
+        Button openButton = row.Find("Button_Р СџРЎС“РЎвЂљРЎРЉ Р Р† Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р Р…Р С‘Р С”Р Вµ")?.GetComponent<Button>();
+        if (openButton != null)
+        {
+            LayoutElement openLayout = EnsureLayoutElement(openButton.GetComponent<RectTransform>());
+            openLayout.preferredWidth = 92f;
+            openLayout.flexibleWidth = 0f;
+            NormalizeButtonLabel(openButton, false, new Vector4(6f, 2f, 6f, 2f), 12f);
+        }
+
+        RectTransform spacer = row.Find("Spacer") as RectTransform;
+        if (spacer == null)
+            spacer = CreatePanel(row, "Spacer", Color.clear);
+        spacer.SetSiblingIndex(Mathf.Max(0, row.childCount - 2));
+        LayoutElement spacerLayout = EnsureLayoutElement(spacer);
+        spacerLayout.preferredWidth = 0f;
+        spacerLayout.flexibleWidth = 1f;
+
+        Button deleteButton = row.Find("Button_Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ")?.GetComponent<Button>();
+        if (deleteButton != null)
+        {
+            LayoutElement deleteLayout = EnsureLayoutElement(deleteButton.GetComponent<RectTransform>());
+            deleteLayout.preferredWidth = 100f;
+            deleteLayout.flexibleWidth = 0f;
+            NormalizeButtonLabel(deleteButton, false, new Vector4(6f, 2f, 6f, 2f), 12f);
+        }
+    }
+
+    private static TMP_Text EnsureFileNameTextOnRoot(RectTransform fileName)
+    {
+        if (fileName == null)
+            return null;
+
+        TMP_Text rootText = fileName.GetComponent<TMP_Text>();
+        TMP_Text childText = null;
+
+        for (int i = 0; i < fileName.childCount; i++)
+        {
+            TMP_Text candidate = fileName.GetChild(i).GetComponent<TMP_Text>();
+            if (candidate != null)
+            {
+                childText = candidate;
+                break;
+            }
+        }
+
+        if (rootText == null)
+        {
+            rootText = fileName.gameObject.AddComponent<TextMeshProUGUI>();
+
+            if (childText != null)
+            {
+                rootText.text = childText.text;
+                rootText.font = childText.font;
+                rootText.fontSharedMaterial = childText.fontSharedMaterial;
+                rootText.fontSize = childText.fontSize;
+                rootText.color = childText.color;
+                rootText.fontStyle = childText.fontStyle;
+                rootText.raycastTarget = childText.raycastTarget;
+            }
+            else
+            {
+                rootText.text = "Документ.pdf";
+                rootText.fontSize = 13f;
+                rootText.color = Color.white;
+                rootText.fontStyle = FontStyles.Normal;
+                rootText.raycastTarget = false;
+            }
+        }
+
+        rootText.alignment = TextAlignmentOptions.TopLeft;
+        rootText.enableWordWrapping = false;
+        rootText.overflowMode = TextOverflowModes.Ellipsis;
+        rootText.margin = Vector4.zero;
+
+        fileName.anchorMin = new Vector2(0f, 0f);
+        fileName.anchorMax = new Vector2(0f, 0f);
+        fileName.pivot = new Vector2(0.5f, 0.5f);
+        fileName.anchoredPosition = Vector2.zero;
+        fileName.sizeDelta = new Vector2(100f, 0f);
+        fileName.localScale = Vector3.one;
+        fileName.localRotation = Quaternion.identity;
+
+        if (childText != null)
+            Object.DestroyImmediate(childText.gameObject);
+
+        return rootText;
+    }
     private static void NormalizeLeftRootOriginal(RectTransform root)
     {
         NormalizeButtonLabel(root.Find("Header/Button_Expand")?.GetComponent<Button>(), true);
@@ -298,7 +430,7 @@ public static class CatalogMainPanelSceneSetup
     private static void NormalizeRightSectionOriginal(RectTransform section)
     {
         NormalizeProductOriginal(section.Find("Products/Product_17") as RectTransform);
-        NormalizeButtonLabel(section.Find("Button_Р”РѕР±Р°РІРёС‚СЊ РїСЂРѕРґСѓРєС‚")?.GetComponent<Button>(), false);
+        NormalizeButtonLabel(section.Find("Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљ")?.GetComponent<Button>(), false);
     }
 
     private static void NormalizeProductOriginal(RectTransform product)
@@ -357,11 +489,12 @@ public static class CatalogMainPanelSceneSetup
             if (descriptionTextChild != null)
                 descriptionTextChild.gameObject.SetActive(true);
         }
-        NormalizeButtonLabel(product.Find("FilesSection/FilesHeader/Button_Р”РѕР±Р°РІРёС‚СЊ С„Р°Р№Р»")?.GetComponent<Button>(), false);
-        NormalizeButtonLabel(product.Find("ActionsRow/Button_РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ")?.GetComponent<Button>(), false);
-        NormalizeButtonLabel(product.Find("ActionsRow/Button_РЈРґР°Р»РёС‚СЊ РїСЂРѕРґСѓРєС‚")?.GetComponent<Button>(), false);
-        NormalizeButtonLabel(product.Find("FilesSection/FileList/FileRow/Button_РџСѓС‚СЊ РІ РїСЂРѕРІРѕРґРЅРёРєРµ")?.GetComponent<Button>(), false);
-        NormalizeButtonLabel(product.Find("FilesSection/FileList/FileRow/Button_РЈРґР°Р»РёС‚СЊ")?.GetComponent<Button>(), false);
+        NormalizeButtonLabel(product.Find("FilesSection/FilesHeader/Button_Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎвЂћР В°Р в„–Р В»")?.GetComponent<Button>(), false);
+        NormalizeButtonLabel(product.Find("ActionsRow/Button_Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…Р С‘РЎвЂљРЎРЉ Р С‘Р В·Р СР ВµР Р…Р ВµР Р…Р С‘РЎРЏ")?.GetComponent<Button>(), false);
+        NormalizeButtonLabel(product.Find("ActionsRow/Button_Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљ")?.GetComponent<Button>(), false);
+        NormalizeButtonLabel(product.Find("FilesSection/FileList/FileRow/Button_Р СџРЎС“РЎвЂљРЎРЉ Р Р† Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р Р…Р С‘Р С”Р Вµ")?.GetComponent<Button>(), false);
+        NormalizeButtonLabel(product.Find("FilesSection/FileList/FileRow/Button_Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ")?.GetComponent<Button>(), false);
+        NormalizeFileRowOriginal(product.Find("FilesSection/FileList/FileRow") as RectTransform);
     }
 
     private static void NormalizeExistingInputField(RectTransform inputRoot, bool multiLine)
@@ -377,17 +510,22 @@ public static class CatalogMainPanelSceneSetup
         input.caretColor = Color.white;
         input.selectionColor = new Color(0.16f, 0.47f, 0.78f, 0.45f);
         input.caretWidth = 2;
-        input.scrollSensitivity = 20f;
+        input.scrollSensitivity = 0f;
         input.lineType = multiLine ? TMP_InputField.LineType.MultiLineNewline : TMP_InputField.LineType.SingleLine;
         input.richText = false;
+        input.verticalScrollbar = null;
+
+        LayoutElement layout = EnsureLayoutElement(inputRoot);
+        float minHeight = multiLine ? (inputRoot.name == "DescriptionInput" ? 110f : 42f) : 42f;
+        layout.minHeight = minHeight;
+        layout.preferredHeight = Mathf.Max(layout.preferredHeight, minHeight);
 
         if (input.textViewport == null)
             input.textViewport = inputRoot.Find("TextArea") as RectTransform;
 
         if (input.textViewport != null)
         {
-            float rightPadding = multiLine ? 24f : 8f;
-            Stretch(input.textViewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 5f), new Vector2(-rightPadding, -5f));
+            Stretch(input.textViewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 5f), new Vector2(-8f, -5f));
 
             if (input.textViewport.GetComponent<RectMask2D>() == null)
                 input.textViewport.gameObject.AddComponent<RectMask2D>();
@@ -413,7 +551,9 @@ public static class CatalogMainPanelSceneSetup
             placeholderText.margin = Vector4.zero;
         }
 
-        AttachInputScrollbar(inputRoot, input, multiLine);
+        Transform scrollbar = inputRoot.Find("Scrollbar");
+        if (scrollbar != null)
+            Object.DestroyImmediate(scrollbar.gameObject);
     }
 
     private static void RemoveDuplicateLabelChildren(Transform parent)
@@ -457,7 +597,7 @@ public static class CatalogMainPanelSceneSetup
 
     private static string TextAddImageMultiline()
     {
-        return "Р”РѕР±Р°РІРёС‚СЊ\nРёР·РѕР±СЂР°Р¶РµРЅРёРµ\nРїСЂРѕРґСѓРєС‚Р°";
+        return "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ\nР С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р Вµ\nР С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљР В°";
     }
 
     private static TMP_Text CreateDisplayText(RectTransform parent, string name, string textValue, float fontSize, Color color, FontStyles style, float minHeight)
@@ -478,20 +618,21 @@ public static class CatalogMainPanelSceneSetup
     private static TMP_InputField CreateInputField(RectTransform parent, string name, string placeholder, float height, bool multiLine)
     {
         RectTransform root = CreatePanel(parent, name, new Color(0.42f, 0.42f, 0.42f, 1f));
-        EnsureLayoutElement(root).preferredHeight = height;
+        LayoutElement layout = EnsureLayoutElement(root);
+        layout.minHeight = height;
+        layout.preferredHeight = height;
 
         TMP_InputField input = root.gameObject.AddComponent<TMP_InputField>();
         input.customCaretColor = true;
         input.caretColor = Color.white;
         input.selectionColor = new Color(0.16f, 0.47f, 0.78f, 0.45f);
         input.caretWidth = 2;
-        input.scrollSensitivity = 20f;
+        input.scrollSensitivity = 0f;
         input.lineType = multiLine ? TMP_InputField.LineType.MultiLineNewline : TMP_InputField.LineType.SingleLine;
         input.richText = false;
 
         RectTransform viewport = CreatePanel(root, "TextArea", Color.clear);
-        float rightPadding = multiLine ? 24f : 8f;
-        Stretch(viewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 5f), new Vector2(-rightPadding, -5f));
+        Stretch(viewport, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(8f, 5f), new Vector2(-8f, -5f));
         viewport.gameObject.AddComponent<RectMask2D>();
         input.textViewport = viewport;
 
@@ -509,48 +650,7 @@ public static class CatalogMainPanelSceneSetup
         placeholderText.raycastTarget = false;
         input.placeholder = placeholderText;
 
-        AttachInputScrollbar(root, input, multiLine);
-
         return input;
-    }
-
-    private static void AttachInputScrollbar(RectTransform inputRoot, TMP_InputField input, bool enabled)
-    {
-        RectTransform scrollbarRoot = inputRoot.Find("Scrollbar") as RectTransform;
-        if (scrollbarRoot == null)
-            scrollbarRoot = CreatePanel(inputRoot, "Scrollbar", Color.clear);
-
-        Stretch(scrollbarRoot, new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-14f, 4f), new Vector2(-4f, -4f));
-        scrollbarRoot.pivot = new Vector2(1f, 0.5f);
-        scrollbarRoot.gameObject.SetActive(enabled);
-
-        Image scrollbarImage = scrollbarRoot.GetComponent<Image>();
-        if (scrollbarImage != null)
-            scrollbarImage.color = new Color(0f, 0f, 0f, 0f);
-
-        Scrollbar scrollbar = scrollbarRoot.GetComponent<Scrollbar>();
-        if (scrollbar == null)
-            scrollbar = scrollbarRoot.gameObject.AddComponent<Scrollbar>();
-        scrollbar.direction = Scrollbar.Direction.BottomToTop;
-
-        RectTransform slidingArea = scrollbarRoot.Find("Sliding Area") as RectTransform;
-        if (slidingArea == null)
-            slidingArea = CreatePanel(scrollbarRoot, "Sliding Area", Color.clear);
-        Stretch(slidingArea, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(2f, 2f), new Vector2(-2f, -2f));
-
-        RectTransform handle = slidingArea.Find("Handle") as RectTransform;
-        if (handle == null)
-            handle = CreatePanel(slidingArea, "Handle", Color.clear);
-        Stretch(handle, new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, new Vector2(0f, 16f));
-
-        Image handleImage = handle.GetComponent<Image>();
-        if (handleImage != null)
-            handleImage.color = new Color(0f, 0f, 0f, 0f);
-
-        scrollbar.handleRect = handle;
-        scrollbar.targetGraphic = handleImage;
-        scrollbar.size = 0.25f;
-        input.verticalScrollbar = enabled ? scrollbar : null;
     }
 
     private static Button CreateButton(
@@ -804,3 +904,4 @@ public static class CatalogMainPanelSceneSetup
         return color;
     }
 }
+
