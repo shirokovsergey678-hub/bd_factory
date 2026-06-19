@@ -672,6 +672,8 @@ public class CatalogMainPanelUI : MonoBehaviour
         Transform scrollbar = input.transform.Find("Scrollbar");
         if (scrollbar != null)
             scrollbar.gameObject.SetActive(false);
+
+        EnsureInputScrollForwarder(input);
     }
 
     void SetProductImageState(CatalogProduct product, TMP_Text label, Image previewImage)
@@ -1008,8 +1010,19 @@ public class CatalogMainPanelUI : MonoBehaviour
         input.placeholder = placeholderText;
 
         input.text = value ?? string.Empty;
+        EnsureInputScrollForwarder(input);
 
         return input;
+    }
+
+    void EnsureInputScrollForwarder(TMP_InputField input)
+    {
+        if (input == null)
+            return;
+
+        InputFieldScrollForwarder forwarder = input.GetComponent<InputFieldScrollForwarder>();
+        if (forwarder == null)
+            forwarder = input.gameObject.AddComponent<InputFieldScrollForwarder>();
     }
 
     RectTransform CreatePanel(string name, Transform parent, Color color)

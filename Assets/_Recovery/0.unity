@@ -1853,8 +1853,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 758.8695, y: -80.7}
-  m_SizeDelta: {x: 1133.739, y: 0}
+  m_AnchoredPosition: {x: 720, y: -80.7}
+  m_SizeDelta: {x: 1056, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &325607553
 MonoBehaviour:
@@ -1952,8 +1952,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 670.8695, y: -88.7}
-  m_SizeDelta: {x: 1325.739, y: 0}
+  m_AnchoredPosition: {x: 632, y: -88.7}
+  m_SizeDelta: {x: 1248, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &329209214
 MonoBehaviour:
@@ -3547,7 +3547,6 @@ GameObject:
   - component: {fileID: 506465531}
   - component: {fileID: 506465530}
   - component: {fileID: 506465529}
-  - component: {fileID: 506465533}
   m_Layer: 0
   m_Name: NameInput
   m_TagString: Untagged
@@ -3734,20 +3733,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 506465527}
   m_CullTransparentMesh: 1
---- !u!114 &506465533
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 506465527}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a856112bb85d93148bccc9f1bc990cec, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InputFieldScrollForwarder
-  smartScrollbar: {fileID: 339952921}
-  fallbackScrollRect: {fileID: 339952920}
 --- !u!1 &508190973
 GameObject:
   m_ObjectHideFlags: 0
@@ -5735,8 +5720,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 662.8695, y: -66}
-  m_SizeDelta: {x: 1313.739, y: 0}
+  m_AnchoredPosition: {x: 624, y: -66}
+  m_SizeDelta: {x: 1236, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &711893546
 MonoBehaviour:
@@ -6491,8 +6476,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 221.5, y: -22.76}
-  m_SizeDelta: {x: 10, y: 27.11}
+  m_AnchoredPosition: {x: 296.5, y: 0}
+  m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &828710048
 MonoBehaviour:
@@ -8547,8 +8532,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 110, y: -22.76}
-  m_SizeDelta: {x: 220, y: 27.11}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 295, y: -4.656613e-10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &962345354
 MonoBehaviour:
@@ -13816,8 +13801,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 111.64996, y: -22.76}
-  m_SizeDelta: {x: -222.7, y: 27.11}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -298, y: -4.656613e-10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1630044202
 MonoBehaviour:
@@ -14209,8 +14194,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 89, y: -73}
-  m_SizeDelta: {x: 162, y: 0}
+  m_AnchoredPosition: {x: 126.5, y: -73}
+  m_SizeDelta: {x: 237, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1652263893
 MonoBehaviour:
@@ -15716,7 +15701,6 @@ GameObject:
   - component: {fileID: 1801330487}
   - component: {fileID: 1801330486}
   - component: {fileID: 1801330485}
-  - component: {fileID: 1801330489}
   m_Layer: 0
   m_Name: DescriptionInput
   m_TagString: Untagged
@@ -15903,20 +15887,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1801330483}
   m_CullTransparentMesh: 1
---- !u!114 &1801330489
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1801330483}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a856112bb85d93148bccc9f1bc990cec, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InputFieldScrollForwarder
-  smartScrollbar: {fileID: 339952921}
-  fallbackScrollRect: {fileID: 339952920}
 --- !u!1 &1808023319
 GameObject:
   m_ObjectHideFlags: 0
@@ -16172,8 +16142,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 670.8695, y: -211.7}
-  m_SizeDelta: {x: 1341.739, y: 0}
+  m_AnchoredPosition: {x: 632, y: -211.7}
+  m_SizeDelta: {x: 1264, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1899664852
 MonoBehaviour:

@@ -55,6 +55,8 @@ public static class CatalogMainPanelSceneSetup
 
         ScrollRect leftScroll = EnsureScrollArea(leftPanel, "LeftScroll", out RectTransform leftContent, new Vector2(6f, 6f), new Vector2(-6f, -6f));
         ScrollRect rightScroll = EnsureScrollArea(rightPanel, "RightScroll", out RectTransform rightContent, new Vector2(8f, 6f), new Vector2(-8f, -6f));
+        SetupSmartScrollbar(leftScroll);
+        SetupSmartScrollbar(rightScroll);
 
         SetupVerticalContent(leftContent, 8, new RectOffset(8, 8, 8, 8));
         SetupVerticalContent(rightContent, 10, new RectOffset(4, 4, 8, 8));
@@ -69,6 +71,7 @@ public static class CatalogMainPanelSceneSetup
         modalRoot.SetAsLastSibling();
 
         AssignReferences(catalogUi, bodyRoot, leftContent, rightContent, modalRoot, leftScroll, rightScroll, addRootOriginal, leftRootOriginal, rightSectionOriginal);
+        EnsureScrollForwardersForScrollableInputs(mainPanel.transform);
 
         EditorUtility.SetDirty(mainPanel);
         EditorSceneManager.MarkSceneDirty(scene);
@@ -554,6 +557,8 @@ public static class CatalogMainPanelSceneSetup
         Transform scrollbar = inputRoot.Find("Scrollbar");
         if (scrollbar != null)
             Object.DestroyImmediate(scrollbar.gameObject);
+
+        EnsureInputFieldScrollForwarder(inputRoot);
     }
 
     private static void RemoveDuplicateLabelChildren(Transform parent)
@@ -650,7 +655,43 @@ public static class CatalogMainPanelSceneSetup
         placeholderText.raycastTarget = false;
         input.placeholder = placeholderText;
 
+        EnsureInputFieldScrollForwarder(root);
+
         return input;
+    }
+
+    private static void EnsureInputFieldScrollForwarder(RectTransform inputRoot)
+    {
+        if (inputRoot == null)
+            return;
+
+        InputFieldScrollForwarder forwarder = inputRoot.GetComponent<InputFieldScrollForwarder>();
+        if (forwarder == null)
+            forwarder = inputRoot.gameObject.AddComponent<InputFieldScrollForwarder>();
+
+        SerializedObject so = new SerializedObject(forwarder);
+        so.FindProperty("smartScrollbar").objectReferenceValue = inputRoot.GetComponentInParent<SmartVerticalScrollbar>();
+        so.FindProperty("fallbackScrollRect").objectReferenceValue = inputRoot.GetComponentInParent<ScrollRect>();
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void EnsureScrollForwardersForScrollableInputs(Transform root)
+    {
+        if (root == null)
+            return;
+
+        TMP_InputField[] inputs = root.GetComponentsInChildren<TMP_InputField>(true);
+        for (int i = 0; i < inputs.Length; i++)
+        {
+            TMP_InputField input = inputs[i];
+            if (input == null)
+                continue;
+
+            if (input.GetComponentInParent<ScrollRect>() == null)
+                continue;
+
+            EnsureInputFieldScrollForwarder(input.transform as RectTransform);
+        }
     }
 
     private static Button CreateButton(
@@ -766,6 +807,67 @@ public static class CatalogMainPanelSceneSetup
         scrollRect.content = content;
 
         return scrollRect;
+    }
+
+    private static void SetupSmartScrollbar(ScrollRect scrollRect)
+    {
+        if (scrollRect == null)
+            return;
+
+        RectTransform scrollRoot = scrollRect.transform as RectTransform;
+        RectTransform viewport = scrollRect.viewport;
+        RectTransform content = scrollRect.content;
+        if (scrollRoot == null || viewport == null || content == null)
+            return;
+
+        Stretch(viewport, new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, new Vector2(-14f, 0f));
+
+        RectTransform track = EnsurePanel(scrollRoot, "VerticalScrollbarTrack", true, new Color(0f, 0f, 0f, 0.10f));
+        Stretch(track, new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-12f, 2f), new Vector2(-2f, -2f));
+        track.SetAsLastSibling();
+
+        RectTransform handle = EnsurePanel(track, "Handle", true, new Color(0.15f, 0.15f, 0.15f, 0.55f));
+        handle.anchorMin = new Vector2(0f, 1f);
+        handle.anchorMax = new Vector2(1f, 1f);
+        handle.pivot = new Vector2(0.5f, 1f);
+        handle.anchoredPosition = Vector2.zero;
+        handle.sizeDelta = new Vector2(0f, 60f);
+        handle.localScale = Vector3.one;
+        handle.localRotation = Quaternion.identity;
+
+        LayoutElement handleLayout = handle.GetComponent<LayoutElement>();
+        if (handleLayout != null)
+            Object.DestroyImmediate(handleLayout);
+
+        SmartVerticalScrollbar controller = scrollRoot.GetComponent<SmartVerticalScrollbar>();
+        if (controller == null)
+            controller = scrollRoot.gameObject.AddComponent<SmartVerticalScrollbar>();
+
+        SmartVerticalScrollbarHandle handleRelay = handle.GetComponent<SmartVerticalScrollbarHandle>();
+        if (handleRelay == null)
+            handleRelay = handle.gameObject.AddComponent<SmartVerticalScrollbarHandle>();
+
+        Image handleImage = handle.GetComponent<Image>();
+        if (handleImage != null)
+            handleImage.raycastTarget = true;
+
+        SerializedObject controllerSo = new SerializedObject(controller);
+        controllerSo.FindProperty("scrollRect").objectReferenceValue = scrollRect;
+        controllerSo.FindProperty("viewport").objectReferenceValue = viewport;
+        controllerSo.FindProperty("content").objectReferenceValue = content;
+        controllerSo.FindProperty("trackRect").objectReferenceValue = track;
+        controllerSo.FindProperty("handleRect").objectReferenceValue = handle;
+        controllerSo.FindProperty("minHandleHeight").floatValue = 28f;
+        controllerSo.FindProperty("trackPaddingTop").floatValue = 2f;
+        controllerSo.FindProperty("trackPaddingBottom").floatValue = 2f;
+        controllerSo.FindProperty("hideWhenNotScrollable").boolValue = true;
+        controllerSo.FindProperty("wheelViewportStep").floatValue = 0.16f;
+        controllerSo.FindProperty("manageMouseWheel").boolValue = true;
+        controllerSo.ApplyModifiedPropertiesWithoutUndo();
+
+        SerializedObject handleSo = new SerializedObject(handleRelay);
+        handleSo.FindProperty("controller").objectReferenceValue = controller;
+        handleSo.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static void SetupVerticalContent(RectTransform content, int spacing, RectOffset padding)
