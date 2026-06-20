@@ -57,6 +57,11 @@ public class CatalogMainPanelUI : MonoBehaviour
     [SerializeField] private RectTransform leftContent;
     [SerializeField] private RectTransform rightContent;
     [SerializeField] private RectTransform modalRoot;
+    [SerializeField] private RectTransform modalDialog;
+    [SerializeField] private TMP_Text modalTitleText;
+    [SerializeField] private TMP_InputField modalNameInput;
+    [SerializeField] private Button modalConfirmButton;
+    [SerializeField] private Button modalCancelButton;
     [SerializeField] private ScrollRect leftScroll;
     [SerializeField] private ScrollRect rightScroll;
 
@@ -134,6 +139,21 @@ public class CatalogMainPanelUI : MonoBehaviour
         if (modalRoot == null)
             modalRoot = transform.Find("ModalRoot") as RectTransform;
 
+        if (modalDialog == null && modalRoot != null)
+            modalDialog = modalRoot.Find("Dialog") as RectTransform;
+
+        if (modalTitleText == null && modalDialog != null)
+            modalTitleText = FindText(modalDialog, "TitleText");
+
+        if (modalNameInput == null && modalDialog != null)
+            modalNameInput = FindInput(modalDialog, "NameInput");
+
+        if (modalConfirmButton == null && modalDialog != null)
+            modalConfirmButton = FindButton(modalDialog, "Buttons/Button_Create");
+
+        if (modalCancelButton == null && modalDialog != null)
+            modalCancelButton = FindButton(modalDialog, "Buttons/Button_Cancel");
+
         if (leftContent != null && !IsValidLeftAddRootButton(leftAddRootOriginal))
             leftAddRootOriginal = FindLeftAddRootOriginal();
 
@@ -150,6 +170,11 @@ public class CatalogMainPanelUI : MonoBehaviour
             && leftContent != null
             && rightContent != null
             && modalRoot != null
+            && modalDialog != null
+            && modalTitleText != null
+            && modalNameInput != null
+            && modalConfirmButton != null
+            && modalCancelButton != null
             && leftScroll != null
             && rightScroll != null
             && leftAddRootOriginal != null
@@ -645,41 +670,26 @@ public class CatalogMainPanelUI : MonoBehaviour
 
     void ShowPrompt(string title, Action<string> onConfirm)
     {
+        if (modalRoot == null || modalTitleText == null || modalNameInput == null || modalConfirmButton == null || modalCancelButton == null)
+            return;
+
         modalRoot.gameObject.SetActive(true);
-        ClearChildren(modalRoot);
+        if (modalDialog != null)
+            modalDialog.gameObject.SetActive(true);
 
-        RectTransform dialog = CreatePanel("Dialog", modalRoot, Color.white);
-        Stretch(dialog, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-210f, -90f), new Vector2(210f, 90f));
+        SetText(modalTitleText, title);
+        ConfigureInput(modalNameInput, TextEnterName, string.Empty, false);
 
-        VerticalLayoutGroup dialogLayout = dialog.gameObject.AddComponent<VerticalLayoutGroup>();
-        dialogLayout.childControlHeight = true;
-        dialogLayout.childControlWidth = true;
-        dialogLayout.childForceExpandHeight = false;
-        dialogLayout.childForceExpandWidth = true;
-        dialogLayout.spacing = 10;
-        dialogLayout.padding = new RectOffset(14, 14, 14, 14);
-
-        CreateText(dialog, title, 18, TextAlignmentOptions.MidlineLeft, Color.black, FontStyles.Bold);
-        TMP_InputField input = CreateInputField(dialog, TextEnterName, string.Empty);
-
-        RectTransform buttons = CreatePanel("Buttons", dialog, Color.clear);
-        HorizontalLayoutGroup buttonsLayout = buttons.gameObject.AddComponent<HorizontalLayoutGroup>();
-        buttonsLayout.childControlHeight = true;
-        buttonsLayout.childControlWidth = false;
-        buttonsLayout.childForceExpandHeight = false;
-        buttonsLayout.childForceExpandWidth = false;
-        buttonsLayout.spacing = 8;
-
-        CreatePrimaryButton(buttons, TextCreate, () =>
+        BindButton(modalConfirmButton, TextCreate, () =>
         {
-            if (string.IsNullOrWhiteSpace(input.text))
+            if (string.IsNullOrWhiteSpace(modalNameInput.text))
                 return;
 
             modalRoot.gameObject.SetActive(false);
-            onConfirm?.Invoke(input.text.Trim());
-        }, 110f, 34f);
+            onConfirm?.Invoke(modalNameInput.text.Trim());
+        });
 
-        CreateGhostButton(buttons, TextCancel, () => modalRoot.gameObject.SetActive(false), 110f, 34f);
+        BindButton(modalCancelButton, TextCancel, () => modalRoot.gameObject.SetActive(false));
     }
 
     void ConfigureInput(TMP_InputField input, string placeholder, string value, bool multiLine)

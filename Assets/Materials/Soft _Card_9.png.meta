@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 2b10d2cb0b2d51f4aa70b0620d6dcfcd
+guid: 69926832e8215d64d94bcea11ca0941d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3582995919388253394
-    second: dfsffafsdfds_0
+      213: -5768505284655641907
+    second: Soft _Card_9_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -72,10 +72,10 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 64
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,23 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: dfsffafsdfds_0
+      name: Soft _Card_9_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 925
-        height: 825
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 11, y: 11, z: 11, w: 11}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2dc9fce1ecb59b130800000000000000
-      internalID: 3582995919388253394
+      spriteID: dca0327a10722ffa0800000000000000
+      internalID: -5768505284655641907
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 21e89c7b798e4e3448bdaeaaa3f20303
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      dfsffafsdfds_0: 3582995919388253394
+      Soft _Card_9_0: -5768505284655641907
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -68,10 +68,11 @@ public static class CatalogMainPanelSceneSetup
 
         RectTransform modalRoot = EnsurePanel(mainPanelRect, "ModalRoot", true, new Color(0f, 0f, 0f, 0.45f));
         Stretch(modalRoot, new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+        RectTransform modalDialog = EnsureModalDialog(modalRoot);
         modalRoot.gameObject.SetActive(false);
         modalRoot.SetAsLastSibling();
 
-        AssignReferences(catalogUi, bodyRoot, leftContent, rightContent, modalRoot, leftScroll, rightScroll, addRootOriginal, leftRootOriginal, rightSectionOriginal);
+        AssignReferences(catalogUi, bodyRoot, leftContent, rightContent, modalRoot, modalDialog, leftScroll, rightScroll, addRootOriginal, leftRootOriginal, rightSectionOriginal);
         EnsureScrollForwardersForScrollableInputs(mainPanel.transform);
 
         EditorUtility.SetDirty(mainPanel);
@@ -143,6 +144,35 @@ public static class CatalogMainPanelSceneSetup
         CreateButton(addChildRow, "Button_Add", "+", new Color(0.82f, 0.82f, 0.82f, 1f), Color.black, 22f, FontStyles.Normal, 22f);
 
         return card;
+    }
+
+    private static RectTransform EnsureModalDialog(RectTransform modalRoot)
+    {
+        RectTransform dialog = EnsurePanel(modalRoot, "Dialog", true, Color.white);
+        Stretch(dialog, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-210f, -90f), new Vector2(210f, 90f));
+        dialog.gameObject.SetActive(true);
+
+        VerticalLayoutGroup dialogLayout = EnsureVerticalLayout(dialog, 10f, new RectOffset(14, 14, 14, 14));
+        dialogLayout.childForceExpandHeight = false;
+        dialogLayout.childForceExpandWidth = true;
+
+        TMP_Text title = EnsureText(dialog, "TitleText", "Новый раздел", 18f, TextAlignmentOptions.MidlineLeft, Color.black, FontStyles.Bold);
+        LayoutElement titleLayout = EnsureLayoutElement(title.rectTransform);
+        titleLayout.preferredHeight = 28f;
+
+        TMP_InputField input = EnsureOrCreateInputField(dialog, "NameInput", "Введи название", 42f, false);
+        NormalizeExistingInputField(input.transform as RectTransform, false);
+
+        RectTransform buttons = EnsurePanel(dialog, "Buttons", false, Color.clear);
+        HorizontalLayoutGroup buttonsLayout = EnsureHorizontalLayout(buttons, 8f, new RectOffset(0, 0, 0, 0));
+        buttonsLayout.childControlHeight = true;
+        buttonsLayout.childControlWidth = false;
+        buttonsLayout.childForceExpandHeight = false;
+        buttonsLayout.childForceExpandWidth = false;
+
+        EnsureModalButton(buttons, "Button_Create", "Создать", ParseColor("0A78C2"), Color.white, 34f, 110f);
+        EnsureModalButton(buttons, "Button_Cancel", "Отмена", new Color(0.12f, 0.12f, 0.12f, 1f), new Color(0.96f, 0.89f, 0.55f), 34f, 110f);
+        return dialog;
     }
 
     private static RectTransform EnsureRightSectionOriginal(RectTransform parent)
@@ -732,6 +762,61 @@ public static class CatalogMainPanelSceneSetup
         return input;
     }
 
+    private static TMP_InputField EnsureOrCreateInputField(RectTransform parent, string name, string placeholder, float height, bool multiLine)
+    {
+        Transform existing = parent.Find(name);
+        TMP_InputField input = existing != null ? existing.GetComponent<TMP_InputField>() : null;
+        if (input != null)
+            return input;
+
+        return CreateInputField(parent, name, placeholder, height, multiLine);
+    }
+
+    private static TMP_Text EnsureText(RectTransform parent, string name, string value, float size, TextAlignmentOptions alignment, Color color, FontStyles fontStyle)
+    {
+        Transform existing = parent.Find(name);
+        TMP_Text text = existing != null ? existing.GetComponent<TMP_Text>() : null;
+        if (text == null)
+            return CreateText(parent, name, value, size, alignment, color, fontStyle);
+
+        text.text = value;
+        text.fontSize = size;
+        text.alignment = alignment;
+        text.color = color;
+        text.fontStyle = fontStyle;
+        text.enableWordWrapping = true;
+        Stretch(text.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+        return text;
+    }
+
+    private static Button EnsureModalButton(RectTransform parent, string name, string label, Color backgroundColor, Color textColor, float height, float width)
+    {
+        Transform existing = parent.Find(name);
+        Button button = existing != null ? existing.GetComponent<Button>() : null;
+        if (button == null)
+            button = CreateButton(parent, name, label, backgroundColor, textColor, height, FontStyles.Normal, width);
+
+        LayoutElement layout = EnsureLayoutElement(button.transform as RectTransform);
+        layout.preferredHeight = height;
+        layout.preferredWidth = width;
+        layout.flexibleWidth = 0f;
+
+        TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            text.text = label;
+            text.alignment = TextAlignmentOptions.Center;
+            text.enableWordWrapping = false;
+            text.overflowMode = TextOverflowModes.Ellipsis;
+        }
+
+        Image image = button.GetComponent<Image>();
+        if (image != null)
+            image.color = backgroundColor;
+
+        return button;
+    }
+
     private static void EnsureInputFieldScrollForwarder(RectTransform inputRoot)
     {
         if (inputRoot == null)
@@ -1003,6 +1088,7 @@ public static class CatalogMainPanelSceneSetup
         RectTransform leftContent,
         RectTransform rightContent,
         RectTransform modalRoot,
+        RectTransform modalDialog,
         ScrollRect leftScroll,
         ScrollRect rightScroll,
         Button addRootOriginal,
@@ -1014,6 +1100,11 @@ public static class CatalogMainPanelSceneSetup
         so.FindProperty("leftContent").objectReferenceValue = leftContent;
         so.FindProperty("rightContent").objectReferenceValue = rightContent;
         so.FindProperty("modalRoot").objectReferenceValue = modalRoot;
+        so.FindProperty("modalDialog").objectReferenceValue = modalDialog;
+        so.FindProperty("modalTitleText").objectReferenceValue = modalDialog.Find("TitleText")?.GetComponent<TMP_Text>();
+        so.FindProperty("modalNameInput").objectReferenceValue = modalDialog.Find("NameInput")?.GetComponent<TMP_InputField>();
+        so.FindProperty("modalConfirmButton").objectReferenceValue = modalDialog.Find("Buttons/Button_Create")?.GetComponent<Button>();
+        so.FindProperty("modalCancelButton").objectReferenceValue = modalDialog.Find("Buttons/Button_Cancel")?.GetComponent<Button>();
         so.FindProperty("leftScroll").objectReferenceValue = leftScroll;
         so.FindProperty("rightScroll").objectReferenceValue = rightScroll;
         so.FindProperty("leftAddRootOriginal").objectReferenceValue = addRootOriginal;
